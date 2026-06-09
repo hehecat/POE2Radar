@@ -1,4 +1,5 @@
 using System.Net;
+using System.Globalization;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
@@ -72,12 +73,15 @@ public sealed class ApiServer : IDisposable
             case "/state":
             {
                 var counts = s.Entities.GroupBy(e => e.Category).ToDictionary(g => g.Key.ToString(), g => g.Count());
+                var area = ZoneGuide.Shared.Area(s.AreaCode);
                 WriteJson(ctx, new
                 {
-                    s.InGame, areaCode = s.AreaCode, areaHash = s.AreaHash, areaLevel = s.AreaLevel,
+                    s.InGame, areaCode = s.AreaCode, areaName = area?.Name ?? s.AreaCode,
+                    act = area?.Act ?? 0, isTown = area?.Town ?? false, hasWaypoint = area?.Waypoint ?? false,
+                    areaHash = s.AreaHash, areaLevel = s.AreaLevel,
                     mapVisible = s.MapVisible, zoom = s.Zoom,
                     hpPct = s.HpPct, manaPct = s.ManaPct, autoFlask = s.AutoFlask, flask = s.FlaskNote,
-                    player = new { x = s.Player.X, y = s.Player.Y },
+                    player = new { name = s.CharName, level = s.CharLevel, x = s.Player.X, y = s.Player.Y },
                     entityCount = s.Entities.Count, counts,
                 });
                 break;
@@ -110,9 +114,12 @@ public sealed class ApiServer : IDisposable
 
                 var list = q2.OrderBy(e => Dist(e.Grid, s.Player)).Take(limit).Select(e => new
                 {
-                    id = e.Id, category = e.Category.ToString(), metadata = e.Metadata,
+                    id = e.Id, addr = $"0x{e.Address:X}", category = e.Category.ToString(), metadata = e.Metadata,
+                    name = EntityNameResolver.Shared.ResolveOrShorten(e.Metadata),
                     poi = e.Poi, friendly = e.IsFriendly, rarity = e.Rarity.ToString(),
                     x = e.Grid.X, y = e.Grid.Y, hpCur = e.HpCur, hpMax = e.HpMax,
+                    boss = e.IsBoss, targetable = e.IsTargetable, locked = e.IsLocked, large = e.IsLarge,
+                    league = e.League.ToString(), speed = e.BaseSpeed, iconComplete = e.IconComplete,
                     alive = e.IsAlive, dist = (int)Dist(e.Grid, s.Player),
                     watched = _watched.IsWatched(e.Metadata),
                 });
@@ -172,6 +179,17 @@ public sealed class ApiServer : IDisposable
                     if (patch != null) ApplySettings(patch);
                     WriteJson(ctx, _settings);
                 }
+                break;
+            }
+
+            case "/api/settings/reset":
+            {
+                if (method == "POST")
+                {
+                    _settings.ResetToDefaults();
+                    WriteJson(ctx, _settings);
+                }
+                else WriteJson(ctx, new { error = "method not allowed" }, 405);
                 break;
             }
 
@@ -333,6 +351,93 @@ public sealed class ApiServer : IDisposable
                 break;
             }
 
+            case "/api/gamedata/areas":
+            {
+                var search = q["search"] ?? "";
+                _ = int.TryParse(q["limit"], out var limit);
+                if (limit <= 0) limit = 500;
+                var areas = ZoneGuide.Shared.Areas
+                    .Where(a => string.IsNullOrWhiteSpace(search)
+                        || a.Code.Contains(search, StringComparison.OrdinalIgnoreCase)
+                        || a.Area.Name.Contains(search, StringComparison.OrdinalIgnoreCase))
+                    .OrderBy(a => a.Area.Act)
+                    .ThenBy(a => a.Area.Level)
+                    .ThenBy(a => a.Area.Name)
+                    .Take(limit)
+                    .Select(a => new
+                    {
+                        code = a.Code, name = a.Area.Name, act = a.Area.Act, level = a.Area.Level,
+                        town = a.Area.Town, waypoint = a.Area.Waypoint,
+                    });
+                WriteJson(ctx, areas);
+                break;
+            }
+
+            case "/api/gamedata/buffs":
+            {
+                WriteJson(ctx, Array.Empty<object>());
+                break;
+            }
+
+            case "/api/gamedata/pins":
+            {
+                var area = ZoneGuide.Shared.Area(s.AreaCode);
+                WriteJson(ctx, new { area = area?.Name ?? s.AreaCode, pins = Array.Empty<object>() });
+                break;
+            }
+
+            case "/api/inspect/components":
+            {
+                WriteJson(ctx, Array.Empty<object>());
+                break;
+            }
+
+            case "/api/inspect/schema":
+            {
+                WriteJson(ctx, new { component = q["component"] ?? "", fields = Array.Empty<object>() });
+                break;
+            }
+
+            case "/api/inspect":
+            {
+                var addr = q["entity"];
+                var e = s.Entities.FirstOrDefault(x => AddressMatches(x.Address, addr));
+                if (e.Address == 0)
+                {
+                    WriteJson(ctx, new { error = "entity not found or out of range" }, 404);
+                    break;
+                }
+
+                WriteJson(ctx, new
+                {
+                    entity = $"0x{e.Address:X}",
+                    name = EntityNameResolver.Shared.ResolveOrShorten(e.Metadata),
+                    metadata = e.Metadata,
+                    components = new Dictionary<string, object?>
+                    {
+                        ["实体摘要"] = new
+                        {
+                            address = $"0x{e.Address:X}",
+                            id = e.Id,
+                            category = e.Category.ToString(),
+                            rarity = e.Rarity.ToString(),
+                            hpCur = e.HpCur,
+                            hpMax = e.HpMax,
+                            alive = e.IsAlive,
+                            boss = e.IsBoss,
+                            targetable = e.IsTargetable,
+                            locked = e.IsLocked,
+                            large = e.IsLarge,
+                            league = e.League.ToString(),
+                            x = e.Grid.X,
+                            y = e.Grid.Y,
+                            dist = (int)Dist(e.Grid, s.Player),
+                        },
+                    },
+                });
+                break;
+            }
+
             default:
                 WriteJson(ctx, new { error = "not found", path }, 404);
                 break;
@@ -348,18 +453,21 @@ public sealed class ApiServer : IDisposable
             if (prop == null) continue;
             try
             {
-                if (prop.PropertyType == typeof(float))
-                    prop.SetValue(_settings, val.GetSingle());
-                else if (prop.PropertyType == typeof(bool))
-                    prop.SetValue(_settings, val.GetBoolean());
-                else if (prop.PropertyType == typeof(string))
-                    prop.SetValue(_settings, val.GetString());
-                else if (prop.PropertyType == typeof(int))
-                    prop.SetValue(_settings, val.GetInt32());
+                var value = JsonSerializer.Deserialize(val.GetRawText(), prop.PropertyType, Json);
+                if (value != null) prop.SetValue(_settings, value);
             }
             catch { }
         }
         _settings.Save();
+    }
+
+    private static bool AddressMatches(nint address, string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return false;
+        var text = input.Trim();
+        if (text.StartsWith("0x", StringComparison.OrdinalIgnoreCase)) text = text[2..];
+        return long.TryParse(text, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var parsed)
+            && parsed == address.ToInt64();
     }
 
     private static string[]? _dbCache;

@@ -46,12 +46,12 @@ public sealed class CheatManager
                 if (def.Type == CheatType.PatchConstant)
                     ResolveConstantAddress(state, sectionBase, bytes, matches[0]);
 
-                Console.WriteLine($"  cheat [{def.ShortName}] found at 0x{state.Address:X}");
+                Console.WriteLine($"  补丁 [{def.ShortName}] 已定位：0x{state.Address:X}");
                 break;
             }
 
             if (!state.Found)
-                Console.WriteLine($"  cheat [{def.ShortName}] pattern not found");
+                Console.WriteLine($"  补丁 [{def.ShortName}] 未找到匹配特征码");
         }
     }
 
@@ -69,19 +69,19 @@ public sealed class CheatManager
         var probe = ReadBytes(candidate, 4);
         if (probe == null)
         {
-            Console.WriteLine($"    constant at 0x{candidate:X} — UNREADABLE, skipping");
+            Console.WriteLine($"    常量地址 0x{candidate:X} 不可读，已跳过");
             return;
         }
 
         var origFloat = BitConverter.ToSingle(probe, 0);
         if (float.IsNaN(origFloat) || float.IsInfinity(origFloat) || origFloat < -1e9f || origFloat > 1e9f)
         {
-            Console.WriteLine($"    constant at 0x{candidate:X} = {origFloat} — INVALID float, skipping");
+            Console.WriteLine($"    常量地址 0x{candidate:X} = {origFloat}，不是有效浮点数，已跳过");
             return;
         }
 
         state.ConstantAddress = candidate;
-        Console.WriteLine($"    constant at 0x{candidate:X} = {origFloat} (RIP disp: 0x{ripOffset:X})");
+        Console.WriteLine($"    常量地址 0x{candidate:X} = {origFloat}（RIP 偏移：0x{ripOffset:X}）");
     }
 
     public bool Toggle(string name)
@@ -121,7 +121,7 @@ public sealed class CheatManager
 
         if (!WriteBytes(state.Address, def.PatchBytes)) return false;
         state.Active = true;
-        Console.WriteLine($"  [{def.ShortName}] ON");
+        Console.WriteLine($"  [{def.ShortName}] 已开启");
         return true;
     }
 
@@ -133,7 +133,7 @@ public sealed class CheatManager
 
         if (!WriteBytes(target, state.OriginalBytes)) return false;
         state.Active = false;
-        Console.WriteLine($"  [{state.Definition.ShortName}] OFF");
+        Console.WriteLine($"  [{state.Definition.ShortName}] 已关闭");
         return true;
     }
 
@@ -170,7 +170,7 @@ public sealed class CheatManager
         if (!NativeMethods.VirtualProtectEx(handle, address, (nuint)bytes.Length,
                 NativeMethods.PAGE_EXECUTE_READWRITE, out var oldProtect))
         {
-            Console.WriteLine($"  VirtualProtectEx failed at 0x{address:X}");
+            Console.WriteLine($"  VirtualProtectEx 失败：0x{address:X}");
             return false;
         }
 
@@ -186,7 +186,7 @@ public sealed class CheatManager
 
         NativeMethods.VirtualProtectEx(handle, address, (nuint)bytes.Length, oldProtect, out _);
 
-        if (!ok) Console.WriteLine($"  WriteProcessMemory failed at 0x{address:X}");
+        if (!ok) Console.WriteLine($"  WriteProcessMemory 失败：0x{address:X}");
         return ok;
     }
 }

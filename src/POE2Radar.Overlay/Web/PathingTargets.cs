@@ -104,13 +104,13 @@ public sealed class PathingTargets
     private void LoadDefaults()
     {
         _entries.AddRange([
-            new("AreaTransition", "Area Exit", true),
-            new("Waypoint", "Waypoint", true),
-            new("Checkpoint", "Checkpoint", true),
-            new("QuestChest", "Quest Chest", true),
-            new("QuestObject", "Quest Object", true),
-            new("Shrine", "Shrine", false),
-            new("Strongbox", "Strongbox", false),
+            new("AreaTransition", "区域出口", true),
+            new("Waypoint", "传送点", true),
+            new("Checkpoint", "检查点", true),
+            new("QuestChest", "任务宝箱", true),
+            new("QuestObject", "任务目标", true),
+            new("Shrine", "神龛", false),
+            new("Strongbox", "保险箱", false),
         ]);
         Save();
     }

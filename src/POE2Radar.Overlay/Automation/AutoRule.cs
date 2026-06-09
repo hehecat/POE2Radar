@@ -93,11 +93,11 @@ public sealed class AutoRuleEngine
     {
         _rules =
         [
-            new() { Name = "Life Flask", Key = 0x31, HpBelow = 50f, CooldownSec = 2.5f },
-            new() { Name = "Mana Flask", Key = 0x32, ManaBelow = 30f, CooldownSec = 2.0f },
-            new() { Name = "Guard Skill", Key = 0x52, HpBelow = 60f, EnemiesNearby = 3, CooldownSec = 4.0f, Enabled = false },
+            new() { Name = "生命药剂", Key = 0x31, HpBelow = 50f, CooldownSec = 2.5f },
+            new() { Name = "魔力药剂", Key = 0x32, ManaBelow = 30f, CooldownSec = 2.0f },
+            new() { Name = "防御技能", Key = 0x52, HpBelow = 60f, EnemiesNearby = 3, CooldownSec = 4.0f, Enabled = false },
         ];
         Save();
-        Console.WriteLine($"  Loaded {_rules.Count} default auto-skill rules");
+        Console.WriteLine($"  已载入 {_rules.Count} 条默认自动技能规则");
     }
 }

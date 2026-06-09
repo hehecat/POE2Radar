@@ -28,6 +28,10 @@ public sealed class ZoneGuide
     /// <summary>Number of zones with known metadata (0 means the table failed to load).</summary>
     public int Count => _areas.Count;
 
+    /// <summary>All known zone metadata, keyed by area code.</summary>
+    public IEnumerable<(string Code, ZoneArea Area)> Areas
+        => _areas.Select(kv => (kv.Key, kv.Value));
+
     private static ZoneGuide LoadEmbedded()
     {
         var guide = new ZoneGuide();

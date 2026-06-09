@@ -92,9 +92,9 @@ public sealed class RadarApp : IDisposable
         _live = new Poe2Live(reader, gameStateSlot);
         _atlas = new Poe2Atlas(reader);
         _cheats = new CheatManager(process, reader);
-        Console.WriteLine("\nScanning cheat patterns...");
+        Console.WriteLine("\n正在扫描游戏补丁特征码...");
         _cheats.ScanAndResolve();
-        Console.WriteLine("Hotkeys: F1-F5 cheats, F8 flask, F9 settings, F10 overlay, F11 web dashboard\n");
+        Console.WriteLine("热键：F1-F5 游戏补丁，F8 自动药剂，F9 设置，F10 显示/隐藏 overlay，F11 网页控制台\n");
         _window = OverlayWindow.Create();
         _renderer = new OverlayRenderer(_window);
         var configDir = Path.Combine(Path.GetDirectoryName(Environment.ProcessPath) ?? ".", "config");
@@ -104,8 +104,8 @@ public sealed class RadarApp : IDisposable
         _pathing = new PathingTargets(Path.Combine(configDir, "pathing_targets.json"));
         _autoRules = new AutoRuleEngine(Path.Combine(configDir, "auto_rules.json"));
         _api = new ApiServer(() => _state, _watched, _radarSettings, _pathing, _autoRules, _hidden);
-        try { _api.Start(); Console.WriteLine("API on http://localhost:7777 (/state, /entities)"); }
-        catch (Exception ex) { Console.Error.WriteLine($"API server disabled: {ex.Message}"); }
+        try { _api.Start(); Console.WriteLine("API 已启动：http://localhost:7777 (/state, /entities)"); }
+        catch (Exception ex) { Console.Error.WriteLine($"API 服务已禁用：{ex.Message}"); }
     }
 
     public void Run()
@@ -225,7 +225,7 @@ public sealed class RadarApp : IDisposable
 
     private string? ResolvePathTargetName()
     {
-        if (_manualPathGridTarget is { } p) return $"Grid ({p.X}, {p.Y})";
+        if (_manualPathGridTarget is { } p) return $"网格 ({p.X}, {p.Y})";
         if (string.IsNullOrWhiteSpace(_manualPathPattern)) return null;
         return _pathing.All.FirstOrDefault(e =>
             e.Pattern.Equals(_manualPathPattern, StringComparison.OrdinalIgnoreCase))?.Label ?? _manualPathPattern;
@@ -283,7 +283,7 @@ public sealed class RadarApp : IDisposable
 
     private void HandleSettingsToggle()
     {
-        // F7 cycle pathing target, Escape = back to auto-nearest
+        // F7 切换路线目标，Escape 恢复自动寻找最近目标
         if (Down(0x1B) && DateTime.UtcNow >= _nextToggleAt && (_manualPathPattern != null || _manualPathGridTarget != null))
         {
             _nextToggleAt = DateTime.UtcNow.AddMilliseconds(300);
@@ -292,7 +292,7 @@ public sealed class RadarApp : IDisposable
             _pathPoints = null;
             _lastPathTarget = "";
             _lastPathPlayerGrid = NumVec2.Zero;
-            Console.WriteLine("\nPath: back to auto-nearest");
+            Console.WriteLine("\n路线：已恢复为自动寻找最近目标");
         }
         if (Down(0x76) && DateTime.UtcNow >= _nextToggleAt)
         {
@@ -305,22 +305,22 @@ public sealed class RadarApp : IDisposable
                 _pathPoints = null;
                 _lastPathTarget = "";
                 _lastPathPlayerGrid = NumVec2.Zero;
-                Console.WriteLine($"\nPath target: {next.Label} ({next.Pattern})");
+                Console.WriteLine($"\n路线目标：{next.Label} ({next.Pattern})");
             }
         }
-        // F11 open web dashboard
+        // F11 打开网页控制台
         if (Down(0x7A) && DateTime.UtcNow >= _nextToggleAt)
         {
             _nextToggleAt = DateTime.UtcNow.AddMilliseconds(500);
             try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("http://localhost:7777") { UseShellExecute = true }); }
             catch { }
         }
-        // F10 toggle overlay visibility
+        // F10 显示/隐藏 overlay
         if (Down(0x79) && DateTime.UtcNow >= _nextToggleAt)
         {
             _overlayVisible = !_overlayVisible;
             _nextToggleAt = DateTime.UtcNow.AddMilliseconds(300);
-            Console.WriteLine($"\nOverlay: {(_overlayVisible ? "VISIBLE" : "HIDDEN")}");
+            Console.WriteLine($"\nOverlay：{(_overlayVisible ? "已显示" : "已隐藏")}");
         }
         if (Down(0x78) && DateTime.UtcNow >= _nextToggleAt) // F9
         {
@@ -347,9 +347,9 @@ public sealed class RadarApp : IDisposable
         if (_live.PlayerVitals(localPlayer) is not { } v) return;
         _hpPct = v.HpPct; _manaPct = v.ManaPct;
 
-        if (!_autoFlask) { _flaskNote = "OFF (F8)"; return; }
-        if (GetForegroundWindow() != _gameHwnd) { _flaskNote = "paused"; return; }
-        _flaskNote = "armed";
+        if (!_autoFlask) { _flaskNote = "关闭 (F8)"; return; }
+        if (GetForegroundWindow() != _gameHwnd) { _flaskNote = "暂停"; return; }
+        _flaskNote = "待命";
 
         // Count nearby enemies for rule conditions
         var playerGrid = _live.PlayerGrid(localPlayer) ?? System.Numerics.Vector2.Zero;
@@ -410,10 +410,10 @@ public sealed class RadarApp : IDisposable
                 bestDist = d2;
                 bestMeta = e.Metadata;
                 var parts = e.Metadata.Split('/');
-                bestName = $"{e.Category} | {parts[^1].Split('@')[0]} | {e.Rarity}" +
-                    (e.HpMax > 0 ? $" | HP {e.HpCur}/{e.HpMax}" : "") +
+                bestName = $"{CategoryLabel(e.Category)} | {parts[^1].Split('@')[0]} | {RarityLabel(e.Rarity)}" +
+                    (e.HpMax > 0 ? $" | 生命 {e.HpCur}/{e.HpMax}" : "") +
                     (e.Poi ? " | POI" : "") +
-                    (e.IsFriendly ? " | Friendly" : "");
+                    (e.IsFriendly ? " | 友方" : "");
             }
         }
 
@@ -422,7 +422,7 @@ public sealed class RadarApp : IDisposable
             _inspectedEntity = bestName;
             _inspectedMeta = bestMeta;
             _inspectedAt = DateTime.UtcNow;
-            Console.WriteLine($"\nInspect: {bestMeta}");
+            Console.WriteLine($"\n检查实体：{bestMeta}");
             Console.WriteLine($"  {bestName}");
         }
     }
@@ -460,7 +460,7 @@ public sealed class RadarApp : IDisposable
             _pathPoints = null;
             _lastPathTarget = "";
             _lastPathPlayerGrid = NumVec2.Zero;
-            Console.WriteLine($"\nAlt+click nav to landmark: {bestLandmark} grid=({(int)bestLmGx},{(int)bestLmGy})");
+            Console.WriteLine($"\nAlt+点击导航到地标：{bestLandmark} 网格=({(int)bestLmGx},{(int)bestLmGy})");
             return;
         }
 
@@ -483,7 +483,7 @@ public sealed class RadarApp : IDisposable
             _pathPoints = null;
             _lastPathTarget = "";
             _lastPathPlayerGrid = NumVec2.Zero;
-            Console.WriteLine($"\nAlt+click nav: {shortName}");
+            Console.WriteLine($"\nAlt+点击导航：{shortName}");
         }
     }
 
@@ -553,7 +553,7 @@ public sealed class RadarApp : IDisposable
 
         if (destX < 0 || destX >= t.Width || destY < 0 || destY >= t.Height)
         {
-            Console.WriteLine($"  Path dest out of bounds: ({destX},{destY}) grid=({t.Width}x{t.Height})");
+            Console.WriteLine($"  路线目标超出地图边界：({destX},{destY}) 网格=({t.Width}x{t.Height})");
             _pathPoints = null;
             return;
         }
@@ -562,11 +562,11 @@ public sealed class RadarApp : IDisposable
         if (result != null)
         {
             _pathPoints = AStarPathfinder.Simplify(result.Value.Points);
-            Console.WriteLine($"  Path found: {result.Value.Points.Count} pts, {result.Value.GridDistance:F0} dist, {result.Value.NodesVisited} visited");
+            Console.WriteLine($"  已找到路线：{result.Value.Points.Count} 点，距离 {result.Value.GridDistance:F0}，访问节点 {result.Value.NodesVisited}");
         }
         else
         {
-            Console.WriteLine($"  Path FAILED: ({px},{py}) -> ({destX},{destY})");
+            Console.WriteLine($"  路线搜索失败：({px},{py}) -> ({destX},{destY})");
             _pathPoints = null;
         }
     }
@@ -577,7 +577,7 @@ public sealed class RadarApp : IDisposable
         {
             _autoFlask = !_autoFlask;
             _nextToggleAt = DateTime.UtcNow.AddMilliseconds(300);
-            Console.WriteLine($"\nAuto-flask: {(_autoFlask ? "ON" : "OFF")}");
+            Console.WriteLine($"\n自动药剂：{(_autoFlask ? "已开启" : "已关闭")}");
         }
         if (DateTime.UtcNow < _nextKeyAt) return;
         var changed = true;
@@ -592,7 +592,7 @@ public sealed class RadarApp : IDisposable
         if (changed)
         {
             _nextKeyAt = DateTime.UtcNow.AddMilliseconds(40);
-            Console.Write($"\rcalib: scaleMul={_radarSettings.ScaleMul:F3} off=({_radarSettings.OffsetX:F0},{_radarSettings.OffsetY:F0})        ");
+            Console.Write($"\r校准：缩放={_radarSettings.ScaleMul:F3} 偏移=({_radarSettings.OffsetX:F0},{_radarSettings.OffsetY:F0})        ");
         }
     }
 
@@ -609,6 +609,25 @@ public sealed class RadarApp : IDisposable
     }
 
     private static bool Down(int vk) => (GetAsyncKeyState(vk) & 0x8000) != 0;
+
+    private static string CategoryLabel(Poe2Live.EntityCategory category) => category switch
+    {
+        Poe2Live.EntityCategory.Monster => "怪物",
+        Poe2Live.EntityCategory.Npc => "NPC",
+        Poe2Live.EntityCategory.Chest => "宝箱",
+        Poe2Live.EntityCategory.Transition => "出口",
+        Poe2Live.EntityCategory.Player => "玩家",
+        _ => "其他",
+    };
+
+    private static string RarityLabel(Poe2Live.Rarity rarity) => rarity switch
+    {
+        Poe2Live.Rarity.Normal => "普通",
+        Poe2Live.Rarity.Magic => "魔法",
+        Poe2Live.Rarity.Rare => "稀有",
+        Poe2Live.Rarity.Unique => "传奇",
+        _ => "-",
+    };
 
     [DllImport("user32.dll")]
     private static extern short GetAsyncKeyState(int vKey);

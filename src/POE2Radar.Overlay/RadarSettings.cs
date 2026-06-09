@@ -46,7 +46,7 @@ public sealed class RadarSettings
     public float LandmarkOutlineWidth { get; set; } = 1.6f;
 
     // Fonts (no cap — scale up for 4K)
-    public string FontFamily { get; set; } = "Consolas";
+    public string FontFamily { get; set; } = "Microsoft YaHei UI";
     public float StatusFontSize { get; set; } = 12f;
     public float LandmarkFontSize { get; set; } = 14f;
     public float TransitionFontSize { get; set; } = 12f;

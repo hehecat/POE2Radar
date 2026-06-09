@@ -36,20 +36,20 @@ public sealed class OverlayRenderer : IDisposable
 
     private static readonly Dictionary<Poe2Live.LeagueMechanic, (Color4 Color, string Label)> LeagueStyles = new()
     {
-        [Poe2Live.LeagueMechanic.Expedition]  = (new Color4(0.90f, 0.75f, 0.30f, 1f), "Exped"),
-        [Poe2Live.LeagueMechanic.Breach]      = (new Color4(0.70f, 0.20f, 0.90f, 1f), "Breach"),
-        [Poe2Live.LeagueMechanic.Ritual]      = (new Color4(0.85f, 0.15f, 0.15f, 1f), "Ritual"),
-        [Poe2Live.LeagueMechanic.Delirium]    = (new Color4(0.75f, 0.75f, 0.75f, 1f), "Delir"),
-        [Poe2Live.LeagueMechanic.Abyss]       = (new Color4(0.30f, 0.85f, 0.30f, 1f), "Abyss"),
-        [Poe2Live.LeagueMechanic.Incursion]   = (new Color4(1.00f, 0.50f, 0.20f, 1f), "Incur"),
-        [Poe2Live.LeagueMechanic.Legion]      = (new Color4(0.60f, 0.40f, 0.20f, 1f), "Legion"),
-        [Poe2Live.LeagueMechanic.Betrayal]    = (new Color4(0.40f, 0.70f, 0.40f, 1f), "Betray"),
-        [Poe2Live.LeagueMechanic.Ultimatum]   = (new Color4(0.90f, 0.20f, 0.40f, 1f), "Ultim"),
-        [Poe2Live.LeagueMechanic.Sanctum]     = (new Color4(0.50f, 0.80f, 1.00f, 1f), "Sanct"),
-        [Poe2Live.LeagueMechanic.Delve]       = (new Color4(0.20f, 0.60f, 0.90f, 1f), "Delve"),
-        [Poe2Live.LeagueMechanic.Heist]       = (new Color4(0.90f, 0.40f, 0.60f, 1f), "Heist"),
-        [Poe2Live.LeagueMechanic.Blight]      = (new Color4(0.50f, 0.80f, 0.20f, 1f), "Blight"),
-        [Poe2Live.LeagueMechanic.Hellscape]   = (new Color4(0.90f, 0.30f, 0.10f, 1f), "Hell"),
+        [Poe2Live.LeagueMechanic.Expedition]  = (new Color4(0.90f, 0.75f, 0.30f, 1f), "远征"),
+        [Poe2Live.LeagueMechanic.Breach]      = (new Color4(0.70f, 0.20f, 0.90f, 1f), "裂隙"),
+        [Poe2Live.LeagueMechanic.Ritual]      = (new Color4(0.85f, 0.15f, 0.15f, 1f), "祭祀"),
+        [Poe2Live.LeagueMechanic.Delirium]    = (new Color4(0.75f, 0.75f, 0.75f, 1f), "迷雾"),
+        [Poe2Live.LeagueMechanic.Abyss]       = (new Color4(0.30f, 0.85f, 0.30f, 1f), "深渊"),
+        [Poe2Live.LeagueMechanic.Incursion]   = (new Color4(1.00f, 0.50f, 0.20f, 1f), "穿越"),
+        [Poe2Live.LeagueMechanic.Legion]      = (new Color4(0.60f, 0.40f, 0.20f, 1f), "军团"),
+        [Poe2Live.LeagueMechanic.Betrayal]    = (new Color4(0.40f, 0.70f, 0.40f, 1f), "辛迪加"),
+        [Poe2Live.LeagueMechanic.Ultimatum]   = (new Color4(0.90f, 0.20f, 0.40f, 1f), "最后通牒"),
+        [Poe2Live.LeagueMechanic.Sanctum]     = (new Color4(0.50f, 0.80f, 1.00f, 1f), "圣所"),
+        [Poe2Live.LeagueMechanic.Delve]       = (new Color4(0.20f, 0.60f, 0.90f, 1f), "矿坑"),
+        [Poe2Live.LeagueMechanic.Heist]       = (new Color4(0.90f, 0.40f, 0.60f, 1f), "夺宝"),
+        [Poe2Live.LeagueMechanic.Blight]      = (new Color4(0.50f, 0.80f, 0.20f, 1f), "菌潮"),
+        [Poe2Live.LeagueMechanic.Hellscape]   = (new Color4(0.90f, 0.30f, 0.10f, 1f), "炼狱"),
     };
     private readonly Dictionary<Poe2Live.LeagueMechanic, ID2D1SolidColorBrush> _leagueBrushes = new();
     private string _lastLandmarkColor = "";
@@ -98,7 +98,7 @@ public sealed class OverlayRenderer : IDisposable
         _bOutline = rt.CreateSolidColorBrush(new Color4(0f, 0f, 0f, 0.8f));
         _bFriendly = rt.CreateSolidColorBrush(new Color4(0.2f, 0.9f, 0.3f, 0.9f));
         _bStyle = rt.CreateSolidColorBrush(ColText);
-        _tf = _window.DWriteFactory.CreateTextFormat("Consolas", null, FontWeight.Normal, Vortice.DirectWrite.FontStyle.Normal, FontStretch.Normal, 12f, "en-us");
+        _tf = _window.DWriteFactory.CreateTextFormat("Consolas", null, FontWeight.Normal, Vortice.DirectWrite.FontStyle.Normal, FontStretch.Normal, 12f, "zh-cn");
         _ready = true;
     }
 
@@ -107,7 +107,7 @@ public sealed class OverlayRenderer : IDisposable
         font ??= _lastFont;
         if (cached != null && Math.Abs(lastSize - size) < 0.1f && font == _lastFont) return cached;
         cached?.Dispose();
-        cached = _window.DWriteFactory.CreateTextFormat(font, null, FontWeight.Normal, Vortice.DirectWrite.FontStyle.Normal, FontStretch.Normal, size, "en-us");
+        cached = _window.DWriteFactory.CreateTextFormat(font, null, FontWeight.Normal, Vortice.DirectWrite.FontStyle.Normal, FontStretch.Normal, size, "zh-cn");
         lastSize = size;
         return cached;
     }
@@ -125,7 +125,7 @@ public sealed class OverlayRenderer : IDisposable
             _tfChest?.Dispose(); _tfChest = null;
             _tfStatus?.Dispose(); _tfStatus = null;
             _tf?.Dispose();
-            _tf = _window.DWriteFactory.CreateTextFormat(font, null, FontWeight.Normal, Vortice.DirectWrite.FontStyle.Normal, FontStretch.Normal, 12f, "en-us");
+            _tf = _window.DWriteFactory.CreateTextFormat(font, null, FontWeight.Normal, Vortice.DirectWrite.FontStyle.Normal, FontStretch.Normal, 12f, "zh-cn");
         }
         var rt = _window.RenderTarget;
         rt.BeginDraw();
@@ -193,32 +193,32 @@ public sealed class OverlayRenderer : IDisposable
         var lh = fs + 4f;
 
         var zoneName = ctx.AreaName ?? ctx.AreaCode;
-        var townTag = ctx.IsTown ? " [Town]" : "";
-        var zoneInfo = ctx.AreaAct > 0 ? $"{zoneName} (Act {ctx.AreaAct}){townTag}" : $"{zoneName}{townTag}";
+        var townTag = ctx.IsTown ? " [城镇]" : "";
+        var zoneInfo = ctx.AreaAct > 0 ? $"{zoneName} (第 {ctx.AreaAct} 章){townTag}" : $"{zoneName}{townTag}";
         var line = !ctx.InGame
-            ? "waiting for in-game..."
-            : $"{zoneInfo}  {ctx.CharName ?? ""} Lv{ctx.CharLevel}  HP {ctx.HpPct:F0}%  MP {ctx.ManaPct:F0}%  flask:{ctx.FlaskNote}";
+            ? "等待进入游戏..."
+            : $"{zoneInfo}  {ctx.CharName ?? ""} Lv{ctx.CharLevel}  生命 {ctx.HpPct:F0}%  魔力 {ctx.ManaPct:F0}%  药剂：{ctx.FlaskNote}";
         rt.FillRectangle(new Vortice.RawRectF(6, 6, 6 + line.Length * cw + 10, 6 + lh), _bPanel!);
         rt.DrawText(line, stf, new Rect(12, 8, 1200, 8 + lh), _bText!, DrawTextOptions.Clip);
 
         if (ctx.InGame)
         {
-            var hud = $"Alive:{alive} (Normal:{normals} Magic:{magics} Rare:{rares} Unique:{uniques})  NPC:{npcs}  Chest:{chests}  Exit:{transitions}";
+            var hud = $"存活:{alive} (普通:{normals} 魔法:{magics} 稀有:{rares} 传奇:{uniques})  NPC:{npcs}  宝箱:{chests}  出口:{transitions}";
             var hudY = 6 + lh + 2f;
             rt.FillRectangle(new Vortice.RawRectF(6, hudY, 6 + hud.Length * cw + 10, hudY + lh), _bPanel!);
 
             var cx = 12f;
             void DrawSeg(string t, ID2D1SolidColorBrush b) { rt.DrawText(t, stf, new Rect(cx, hudY + 2, cx + 600, hudY + lh), b); cx += t.Length * cw; }
-            DrawSeg($"Alive:{alive} (", _bText!);
-            DrawSeg($"Normal:{normals} ", _bMonster!);
-            DrawSeg($"Magic:{magics} ", _bMagic!);
-            DrawSeg($"Rare:{rares} ", _bRare!);
-            DrawSeg($"Unique:{uniques}", _bUnique!);
+            DrawSeg($"存活:{alive} (", _bText!);
+            DrawSeg($"普通:{normals} ", _bMonster!);
+            DrawSeg($"魔法:{magics} ", _bMagic!);
+            DrawSeg($"稀有:{rares} ", _bRare!);
+            DrawSeg($"传奇:{uniques}", _bUnique!);
             DrawSeg($")  ", _bText!);
             DrawSeg($"NPC:{npcs}  ", _bNpc!);
-            DrawSeg($"Chest:{chests}  ", _bChest!);
-            DrawSeg($"Exit:{transitions}", _bTrans!);
-            if (bosses > 0) DrawSeg($"  BOSS:{bosses}", _bUnique!);
+            DrawSeg($"宝箱:{chests}  ", _bChest!);
+            DrawSeg($"出口:{transitions}", _bTrans!);
+            if (bosses > 0) DrawSeg($"  首领:{bosses}", _bUnique!);
             foreach (var (league, count) in leagueCounts)
             {
                 if (LeagueStyles.TryGetValue(league, out var style))
@@ -230,14 +230,14 @@ public sealed class OverlayRenderer : IDisposable
         {
             var cx = 12f;
             var cy = 6 + lh * 2 + 4f;
-            var label = "cheats: ";
+            var label = "补丁：";
             rt.FillRectangle(new Vortice.RawRectF(6, cy - 2, 500, cy + lh), _bPanel!);
             rt.DrawText(label, stf, new Rect(cx, cy, cx + 200, cy + lh), _bText!, DrawTextOptions.Clip);
             cx += label.Length * cw;
 
             foreach (var (_, info) in cheats)
             {
-                var tag = info.Active ? "ON" : info.Found ? "off" : "--";
+                var tag = info.Active ? "开" : info.Found ? "关" : "--";
                 var brush = info.Active ? _bCheatOn! : info.Found ? _bCheatOff! : _bCheatMiss!;
                 var text = $"{info.ShortName}[{tag}] ";
                 rt.DrawText(text, stf, new Rect(cx, cy, cx + 200, cy + lh), brush, DrawTextOptions.Clip);
@@ -288,7 +288,7 @@ public sealed class OverlayRenderer : IDisposable
             {
                 if (!e.IsBoss || !e.IsAlive) continue;
                 var bName = ctx.EntityNames?.ResolveOrShorten(e.Metadata) ?? e.Metadata.Split('/')[^1];
-                lines.Add(($"★ BOSS: {bName}", _bUnique!));
+                lines.Add(($"★ 首领：{bName}", _bUnique!));
             }
 
             if (lines.Count > 0)
@@ -297,7 +297,7 @@ public sealed class OverlayRenderer : IDisposable
                 var panelW = maxLen * poiCw + 20f;
                 var panelH = lines.Count * (poiFs + 3) + 6f;
                 rt.FillRectangle(new Vortice.RawRectF(6, poiY - 2, 6 + panelW, poiY + panelH), _bPanel!);
-                rt.DrawText("POI IN MAP:", poiTf, new Rect(10, poiY, 200, poiY + poiFs), _bText!);
+                rt.DrawText("地图要点：", poiTf, new Rect(10, poiY, 200, poiY + poiFs), _bText!);
                 poiY += poiFs + 3;
                 foreach (var (text, brush) in lines)
                 {
@@ -911,7 +911,7 @@ public sealed class OverlayRenderer : IDisposable
                     var chTf = GetTextFormat(chFs, ref _tfChest, ref _lastChFs);
                     var chLabel = DetectChestType(e.Metadata);
                     if (string.IsNullOrEmpty(chLabel))
-                        chLabel = e.Rarity == Poe2Live.Rarity.Unique ? "Unique" : e.Rarity == Poe2Live.Rarity.Rare ? "Rare" : "";
+                        chLabel = e.Rarity == Poe2Live.Rarity.Unique ? "传奇" : e.Rarity == Poe2Live.Rarity.Rare ? "稀有" : "";
                     if (e.IsLocked) chLabel = "🔒 " + chLabel;
                     if (!string.IsNullOrEmpty(chLabel))
                         rt.DrawText(chLabel, chTf, new Rect(p.X + r + 3, p.Y - chFs / 2, p.X + 200, p.Y + chFs), brush);
@@ -975,18 +975,18 @@ public sealed class OverlayRenderer : IDisposable
 
     private static string DetectChestType(string meta)
     {
-        if (meta.Contains("Strongbox", StringComparison.OrdinalIgnoreCase)) return "Strongbox";
-        if (meta.Contains("Abyss", StringComparison.OrdinalIgnoreCase)) return "Abyss Chest";
-        if (meta.Contains("Ritual", StringComparison.OrdinalIgnoreCase)) return "Ritual";
-        if (meta.Contains("Expedition", StringComparison.OrdinalIgnoreCase)) return "Expedition";
-        if (meta.Contains("Breach", StringComparison.OrdinalIgnoreCase)) return "Breach";
-        if (meta.Contains("Delve", StringComparison.OrdinalIgnoreCase)) return "Delve";
-        if (meta.Contains("Heist", StringComparison.OrdinalIgnoreCase)) return "Heist";
-        if (meta.Contains("Megalith", StringComparison.OrdinalIgnoreCase)) return "Megalith";
-        if (meta.Contains("Reward", StringComparison.OrdinalIgnoreCase)) return "Reward";
-        if (meta.Contains("Spire", StringComparison.OrdinalIgnoreCase)) return "Spire";
-        if (meta.Contains("Trap", StringComparison.OrdinalIgnoreCase)) return "Trap Chest";
-        if (meta.Contains("Tutorial", StringComparison.OrdinalIgnoreCase)) return "Tutorial";
+        if (meta.Contains("Strongbox", StringComparison.OrdinalIgnoreCase)) return "保险箱";
+        if (meta.Contains("Abyss", StringComparison.OrdinalIgnoreCase)) return "深渊宝箱";
+        if (meta.Contains("Ritual", StringComparison.OrdinalIgnoreCase)) return "祭祀";
+        if (meta.Contains("Expedition", StringComparison.OrdinalIgnoreCase)) return "远征";
+        if (meta.Contains("Breach", StringComparison.OrdinalIgnoreCase)) return "裂隙";
+        if (meta.Contains("Delve", StringComparison.OrdinalIgnoreCase)) return "矿坑";
+        if (meta.Contains("Heist", StringComparison.OrdinalIgnoreCase)) return "夺宝";
+        if (meta.Contains("Megalith", StringComparison.OrdinalIgnoreCase)) return "巨石";
+        if (meta.Contains("Reward", StringComparison.OrdinalIgnoreCase)) return "奖励";
+        if (meta.Contains("Spire", StringComparison.OrdinalIgnoreCase)) return "尖塔";
+        if (meta.Contains("Trap", StringComparison.OrdinalIgnoreCase)) return "陷阱宝箱";
+        if (meta.Contains("Tutorial", StringComparison.OrdinalIgnoreCase)) return "教程";
         return "";
     }
 
@@ -1026,7 +1026,7 @@ public sealed class OverlayRenderer : IDisposable
         var fs = ctx.Radar?.LandmarkFontSize is > 0 ? ctx.Radar.LandmarkFontSize + 6 : 20f;
         var tf = GetTextFormat(fs, ref _tfPathTarget, ref _lastPathTargetFs);
 
-        var text = $">> {name}";
+        var text = $"导航：{name}";
         float boxW = text.Length * (fs * 0.55f) + 24;
         float boxH = fs + 12;
         float boxX = ctx.WindowWidth * 0.5f - boxW * 0.5f;

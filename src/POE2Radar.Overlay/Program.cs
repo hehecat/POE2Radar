@@ -4,7 +4,7 @@ using System.Windows.Forms;
 using POE2Radar.Core;
 using POE2Radar.Overlay;
 
-// ── Self-relaunch with random process name ──
+// ── 使用随机进程名重新启动 ──
 if (!args.Contains("--launched"))
 {
     var currentExe = Environment.ProcessPath;
@@ -29,7 +29,7 @@ if (!args.Contains("--launched"))
         }
         catch
         {
-            // hardlink failed, just run directly
+            // 硬链接失败时直接运行当前程序
         }
     }
 }
@@ -38,7 +38,7 @@ Application.EnableVisualStyles();
 Application.SetCompatibleTextRenderingDefault(false);
 Application.SetHighDpiMode(HighDpiMode.SystemAware);
 
-var myName = Path.GetFileNameWithoutExtension(Environment.ProcessPath ?? "Radar");
+var myName = Path.GetFileNameWithoutExtension(Environment.ProcessPath ?? "雷达");
 Console.Title = myName;
 Console.WriteLine(myName);
 Console.WriteLine(new string('=', myName.Length));
@@ -50,34 +50,34 @@ try
 }
 catch (Exception ex)
 {
-    Console.Error.WriteLine($"Failed to attach: {ex.Message}");
-    Console.Error.WriteLine("Make sure PoE2 is running and you launched as Administrator.");
-    Console.WriteLine("Press any key to exit...");
+    Console.Error.WriteLine($"附加进程失败：{ex.Message}");
+    Console.Error.WriteLine("请确认 PoE2 正在运行，并且本程序已用管理员权限启动。");
+    Console.WriteLine("按任意键退出...");
     Console.ReadKey();
     return 1;
 }
 if (process is null)
 {
-    Console.Error.WriteLine("PoE2 not running (no matching process found).");
-    Console.WriteLine("Press any key to exit...");
+    Console.Error.WriteLine("未检测到 PoE2 进程。");
+    Console.WriteLine("按任意键退出...");
     Console.ReadKey();
     return 1;
 }
 using var processHandle = process;
-Console.WriteLine($"Attached to {process.ProcessName} (PID {process.ProcessId})");
+Console.WriteLine($"已附加到 {process.ProcessName} (PID {process.ProcessId})");
 
 var reader = new MemoryReader(process);
 var slot = Bootstrap.ResolveGameStateSlot(process, reader);
 if (slot == 0) return 2;
 
 Console.WriteLine();
-Console.WriteLine("Running. F9 = settings. Ctrl+C to exit.");
+Console.WriteLine("运行中。F9 = 设置，F11 = 网页控制台，Ctrl+C = 退出。");
 
 using var app = new RadarApp(process, reader, slot);
 Console.CancelKeyPress += (_, e) => { e.Cancel = true; app.RequestShutdown(); };
 app.Run();
 
-// Clean up hardlinks (anything that isn't the original exe)
+// 清理随机名硬链接
 try
 {
     var self = Environment.ProcessPath;

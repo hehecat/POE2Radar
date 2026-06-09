@@ -4,7 +4,7 @@ public static class DashboardHtml
 {
     public const string Page = """
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>Radar Dashboard</title>
+<html><head><meta charset="utf-8"><title>雷达控制台</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#1a1a24;color:#e0e0e0;font-family:'Segoe UI',sans-serif;padding:16px;max-width:900px;margin:0 auto}
@@ -59,54 +59,54 @@ tr.watched{background:#2a3a2a}
 .saved{color:#5f5;font-size:12px;opacity:0;transition:opacity 0.3s}
 .saved.show{opacity:1}
 </style></head><body>
-<h1>Radar Dashboard</h1>
-<div class="status" id="status">Connecting...</div>
+<h1>POE2Radar 控制台</h1>
+<div class="status" id="status">正在连接...</div>
 
 <div class="tabs">
-  <button class="tab active" onclick="showTab('entities')">Live Entities</button>
-  <button class="tab" onclick="showTab('watched')">Watched</button>
-  <button class="tab" onclick="showTab('database')">Database</button>
-  <button class="tab" onclick="showTab('settings')">Radar Settings</button>
-  <button class="tab" onclick="showTab('rules')">Auto-Skills</button>
-  <button class="tab" onclick="showTab('pathing')">Pathing</button>
-  <button class="tab" onclick="showTab('minimap')">Minimap</button>
-  <button class="tab" onclick="showTab('landmarks')">Landmarks</button>
-  <button class="tab" onclick="showTab('gamedata')">Game Data</button>
-  <button class="tab" onclick="showTab('hidden')">Hidden</button>
-  <button class="tab" onclick="showTab('keybinds')">Keybinds</button>
-  <button class="tab" onclick="showTab('devtest')" style="color:#f88">DevTest</button>
-  <button class="tab" onclick="showTab('inspector')">Inspector</button>
+  <button class="tab active" onclick="showTab('entities')">实时实体</button>
+  <button class="tab" onclick="showTab('watched')">关注</button>
+  <button class="tab" onclick="showTab('database')">数据库</button>
+  <button class="tab" onclick="showTab('settings')">雷达设置</button>
+  <button class="tab" onclick="showTab('rules')">自动技能</button>
+  <button class="tab" onclick="showTab('pathing')">路线</button>
+  <button class="tab" onclick="showTab('minimap')">小地图</button>
+  <button class="tab" onclick="showTab('landmarks')">地标</button>
+  <button class="tab" onclick="showTab('gamedata')">游戏数据</button>
+  <button class="tab" onclick="showTab('hidden')">隐藏</button>
+  <button class="tab" onclick="showTab('keybinds')">热键</button>
+  <button class="tab" onclick="showTab('devtest')" style="color:#f88">开发测试</button>
+  <button class="tab" onclick="showTab('inspector')">检查器</button>
 </div>
 
 <!-- LIVE ENTITIES -->
 <div class="panel active" id="tab-entities">
   <div class="search">
-    <input type="text" id="search" placeholder="Search metadata..." oninput="filterEntities()">
-    <label><input type="checkbox" id="aliveOnly" onchange="refresh()"> Alive only</label>
-    <span class="auto-refresh">Auto-refresh 2s</span>
+    <input type="text" id="search" placeholder="搜索 metadata..." oninput="filterEntities()">
+    <label><input type="checkbox" id="aliveOnly" onchange="refresh()"> 仅存活</label>
+    <span class="auto-refresh">每 2 秒自动刷新</span>
   </div>
   <div class="filter-btns" id="catFilters"></div>
   <div class="scrollbox"><table><thead>
-    <tr><th>Cat</th><th>Rarity</th><th>Metadata</th><th>HP</th><th>Dist</th><th></th></tr>
+    <tr><th>类型</th><th>稀有度</th><th>Metadata</th><th>生命</th><th>距离</th><th></th></tr>
   </thead><tbody id="entityBody"></tbody></table></div>
 </div>
 
 <!-- WATCHED -->
 <div class="panel" id="tab-watched">
-  <h2>Add Custom Watch</h2>
+  <h2>添加自定义关注</h2>
   <div class="add-form">
-    <input type="text" id="addPattern" placeholder="Metadata pattern" style="width:220px">
-    <input type="text" id="addLabel" placeholder="Radar nickname" style="width:130px">
+    <input type="text" id="addPattern" placeholder="Metadata 匹配片段" style="width:220px">
+    <input type="text" id="addLabel" placeholder="雷达昵称" style="width:130px">
     <input type="color" id="addColor" value="#ff5555">
-    <button class="btn btn-add" onclick="addWatched()">Add</button>
+    <button class="btn btn-add" onclick="addWatched()">添加</button>
   </div>
-  <p style="font-size:11px;color:#666;margin-bottom:8px">The nickname is displayed on the radar overlay next to the entity dot.</p>
+  <p style="font-size:11px;color:#666;margin-bottom:8px">昵称会显示在 overlay 的实体点旁边。</p>
   <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
-    <h2 style="margin:0">Current Watched</h2>
-    <button class="btn btn-save" onclick="exportWatched()" style="margin-left:auto">Export JSON</button>
-    <button class="btn btn-add" onclick="$('importFile').click()">Import JSON</button>
+    <h2 style="margin:0">当前关注</h2>
+    <button class="btn btn-save" onclick="exportWatched()" style="margin-left:auto">导出 JSON</button>
+    <button class="btn btn-add" onclick="$('importFile').click()">导入 JSON</button>
     <input type="file" id="importFile" accept=".json" style="display:none" onchange="importWatched(this)">
-    <span class="saved" id="importMsg">Imported!</span>
+    <span class="saved" id="importMsg">已导入！</span>
   </div>
   <div id="watchedList"></div>
 </div>
@@ -114,21 +114,21 @@ tr.watched{background:#2a3a2a}
 <!-- DATABASE -->
 <div class="panel" id="tab-database">
   <div class="search">
-    <input type="text" id="dbSearch" placeholder="Search all game entities..." style="width:350px" oninput="filterDb()">
-    <label style="font-size:12px;color:#aaa"><input type="checkbox" id="dbHideJunk" checked onchange="filterDb()"> Hide junk</label>
+    <input type="text" id="dbSearch" placeholder="搜索全部游戏实体..." style="width:350px" oninput="filterDb()">
+    <label style="font-size:12px;color:#aaa"><input type="checkbox" id="dbHideJunk" checked onchange="filterDb()"> 隐藏垃圾项</label>
     <span id="dbCount" class="count"></span>
   </div>
   <div class="filter-btns" id="dbCatFilters"></div>
   <div class="scrollbox"><table><thead>
-    <tr><th>Category</th><th>Path</th><th></th></tr>
+    <tr><th>分类</th><th>路径</th><th></th></tr>
   </thead><tbody id="dbBody"></tbody></table></div>
 </div>
 
 <!-- RADAR SETTINGS -->
 <div class="panel" id="tab-settings">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-    <h2 style="margin:0">Radar Settings</h2>
-    <div><span class="saved" id="savedMsg">Saved!</span> <button class="btn btn-save" onclick="saveSettings()">Save</button> <button class="btn" style="background:#2a3a5a;color:#8cf" onclick="exportSettings()">Export</button> <button class="btn" style="background:#2a5a3a;color:#8f8" onclick="$('importFile').click()">Import</button><input type="file" id="importFile" accept=".json" style="display:none" onchange="importSettings(event)"> <button class="btn" style="background:#5a2a2a;color:#f88" onclick="resetSettings()">Reset</button></div>
+    <h2 style="margin:0">雷达设置</h2>
+    <div><span class="saved" id="savedMsg">已保存！</span> <button class="btn btn-save" onclick="saveSettings()">保存</button> <button class="btn" style="background:#2a3a5a;color:#8cf" onclick="exportSettings()">导出</button> <button class="btn" style="background:#2a5a3a;color:#8f8" onclick="$('settingsImportFile').click()">导入</button><input type="file" id="settingsImportFile" accept=".json" style="display:none" onchange="importSettings(event)"> <button class="btn" style="background:#5a2a2a;color:#f88" onclick="resetSettings()">重置</button></div>
   </div>
   <div id="settingsBody"></div>
 </div>
@@ -136,39 +136,39 @@ tr.watched{background:#2a3a2a}
 <!-- AUTO-SKILLS -->
 <div class="panel" id="tab-rules">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-    <h2 style="margin:0">Auto-Skill Rules</h2>
-    <button class="btn btn-save" id="rulesToggle" onclick="toggleRules()">Loading...</button>
-    <span style="font-size:11px;color:#888">F8 also toggles in-game</span>
+    <h2 style="margin:0">自动技能规则</h2>
+    <button class="btn btn-save" id="rulesToggle" onclick="toggleRules()">加载中...</button>
+    <span style="font-size:11px;color:#888">游戏内也可用 F8 开关</span>
   </div>
   <p style="font-size:12px;color:#aaa;margin-bottom:10px">
-    Each rule: if ALL conditions are true → press the key. Rules checked every tick. Cooldown prevents spam.
+    每条规则会在所有条件满足时按下指定按键；冷却时间用于防止连续触发。
   </p>
   <div id="rulesList"></div>
   <div class="section" style="margin-top:10px">
-    <h3>Add Rule</h3>
+    <h3>添加规则</h3>
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-      <input type="text" id="ruleAddName" placeholder="Name" style="width:100px">
-      <label style="font-size:12px;color:#ccc">Key:</label>
-      <input type="text" id="ruleAddKey" placeholder="e.g. Q, 1, R" style="width:50px">
-      <label style="font-size:12px;color:#ccc">CD:</label>
+      <input type="text" id="ruleAddName" placeholder="名称" style="width:100px">
+      <label style="font-size:12px;color:#ccc">按键：</label>
+      <input type="text" id="ruleAddKey" placeholder="如 Q, 1, R" style="width:50px">
+      <label style="font-size:12px;color:#ccc">冷却：</label>
       <input type="number" id="ruleAddCd" value="2" min="0.1" max="30" step="0.5" style="width:50px">
-      <label style="font-size:12px;color:#ccc">HP&lt;</label>
+      <label style="font-size:12px;color:#ccc">生命&lt;</label>
       <input type="number" id="ruleAddHp" placeholder="-" min="0" max="100" style="width:50px">
-      <label style="font-size:12px;color:#ccc">Mana&lt;</label>
+      <label style="font-size:12px;color:#ccc">魔力&lt;</label>
       <input type="number" id="ruleAddMana" placeholder="-" min="0" max="100" style="width:50px">
-      <label style="font-size:12px;color:#ccc">ES&lt;</label>
+      <label style="font-size:12px;color:#ccc">能盾&lt;</label>
       <input type="number" id="ruleAddEs" placeholder="-" min="0" max="100" style="width:50px">
-      <label style="font-size:12px;color:#ccc">Enemies&ge;</label>
+      <label style="font-size:12px;color:#ccc">敌人&ge;</label>
       <input type="number" id="ruleAddEnemies" placeholder="-" min="0" max="50" style="width:50px">
-      <label style="font-size:12px;color:#ccc">Boss:</label>
-      <select id="ruleAddBoss" style="width:60px"><option value="">-</option><option value="true">Yes</option><option value="false">No</option></select>
-      <label style="font-size:12px;color:#ccc">Wait(s):</label>
+      <label style="font-size:12px;color:#ccc">首领：</label>
+      <select id="ruleAddBoss" style="width:60px"><option value="">-</option><option value="true">是</option><option value="false">否</option></select>
+      <label style="font-size:12px;color:#ccc">等待(秒)：</label>
       <input type="number" id="ruleAddWait" placeholder="-" min="0" max="10" step="0.1" style="width:50px">
-      <label style="font-size:12px;color:#ccc">Moving:</label>
-      <select id="ruleAddMoving" style="width:60px"><option value="">-</option><option value="true">Yes</option><option value="false">No</option></select>
-      <label style="font-size:12px;color:#ccc">Hold Key:</label>
+      <label style="font-size:12px;color:#ccc">移动中：</label>
+      <select id="ruleAddMoving" style="width:60px"><option value="">-</option><option value="true">是</option><option value="false">否</option></select>
+      <label style="font-size:12px;color:#ccc">按住键：</label>
       <input type="text" id="ruleAddHoldKey" placeholder="-" style="width:40px">
-      <button class="btn btn-add" onclick="addRule()">Add</button>
+      <button class="btn btn-add" onclick="addRule()">添加</button>
     </div>
   </div>
 </div>
@@ -176,14 +176,14 @@ tr.watched{background:#2a3a2a}
 <!-- PATHING -->
 <div class="panel" id="tab-pathing">
   <p style="font-size:12px;color:#aaa;margin-bottom:10px">
-    The radar auto-paths to the <b>nearest</b> entity matching any enabled target below.<br>
-    Press <b>F7</b> in-game to cycle through targets manually.
+    雷达会自动导航到下方启用目标中距离<b>最近</b>的匹配实体。<br>
+    游戏内按 <b>F7</b> 可手动切换目标。
   </p>
   <div class="add-form">
-    <input type="text" id="pathAddPattern" placeholder="Metadata pattern" style="width:200px">
-    <input type="text" id="pathAddLabel" placeholder="Label" style="width:120px">
-    <button class="btn btn-add" onclick="addPathTarget()">Add</button>
-    <button class="btn" style="background:#2a4a5a;color:#5cf;margin-left:auto" onclick="cyclePathTarget()">Cycle Next (F7)</button>
+    <input type="text" id="pathAddPattern" placeholder="Metadata 匹配片段" style="width:200px">
+    <input type="text" id="pathAddLabel" placeholder="显示名称" style="width:120px">
+    <button class="btn btn-add" onclick="addPathTarget()">添加</button>
+    <button class="btn" style="background:#2a4a5a;color:#5cf;margin-left:auto" onclick="cyclePathTarget()">切换下一个 (F7)</button>
   </div>
   <div id="pathingList" style="margin-top:8px"></div>
 </div>
@@ -191,67 +191,66 @@ tr.watched{background:#2a3a2a}
 <!-- MINIMAP -->
 <div class="panel" id="tab-minimap">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-    <h2 style="margin:0">Minimap Settings</h2>
-    <div><span class="saved" id="mmSavedMsg">Saved!</span> <button class="btn btn-save" onclick="saveSettings();$('mmSavedMsg').classList.add('show');setTimeout(()=>$('mmSavedMsg').classList.remove('show'),1500)">Save</button></div>
+    <h2 style="margin:0">小地图设置</h2>
+    <div><span class="saved" id="mmSavedMsg">已保存！</span> <button class="btn btn-save" onclick="saveSettings();$('mmSavedMsg').classList.add('show');setTimeout(()=>$('mmSavedMsg').classList.remove('show'),1500)">保存</button></div>
   </div>
   <div id="minimapSettingsBody"></div>
 </div>
 
 <!-- LANDMARKS -->
 <div class="panel" id="tab-landmarks">
-  <div class="search"><input type="text" id="lmSearch" placeholder="Search landmarks..." style="width:300px" oninput="filterLandmarks()"></div>
+  <div class="search"><input type="text" id="lmSearch" placeholder="搜索地标..." style="width:300px" oninput="filterLandmarks()"></div>
   <div class="scrollbox"><table><thead>
-    <tr><th>Name</th><th>Path</th><th>Tiles</th><th>Dist</th><th></th></tr>
+    <tr><th>名称</th><th>路径</th><th>Tile 数</th><th>距离</th><th></th></tr>
   </thead><tbody id="lmBody"></tbody></table></div>
 </div>
 
 <!-- DEVTEST -->
 <div class="panel" id="tab-devtest">
   <div style="background:#3a1a1a;border:1px solid #f44;border-radius:6px;padding:10px;margin-bottom:12px">
-    <h2 style="margin:0;color:#f88">⚠ DevTest — Game Memory Writes</h2>
-    <p style="color:#faa;font-size:12px;margin:6px 0 0">These write directly to game entity memory. <b>WILL LIKELY CRASH</b> — component byte field offsets need re-validation for the current game patch. The header delta between ComponentList pointers and setter function bases has not been resolved yet. Use at your own risk.</p>
+    <h2 style="margin:0;color:#f88">⚠ 开发测试 - 写入游戏内存</h2>
+    <p style="color:#faa;font-size:12px;margin:6px 0 0">这些选项会直接写入游戏实体内存，<b>很可能导致崩溃</b>。当前游戏版本的组件字段偏移需要重新验证，风险自负。</p>
   </div>
   <div id="devtestBody"></div>
-  <div style="margin-top:10px"><button class="btn btn-save" onclick="saveSettings()">Save</button></div>
+  <div style="margin-top:10px"><button class="btn btn-save" onclick="saveSettings()">保存</button></div>
 </div>
 
 <!-- GAME DATA -->
 <div class="panel" id="tab-gamedata">
   <div style="display:flex;gap:8px;margin-bottom:10px">
-    <button class="btn btn-save" onclick="loadGdAreas()">World Areas</button>
-    <button class="btn btn-save" onclick="loadGdBuffs()">Buffs</button>
-    <button class="btn btn-save" onclick="loadGdPins()">Map Pins (current zone)</button>
+    <button class="btn btn-save" onclick="loadGdAreas()">区域表</button>
+    <button class="btn btn-save" onclick="loadGdBuffs()">增益</button>
+    <button class="btn btn-save" onclick="loadGdPins()">地图标记（当前区域）</button>
   </div>
-  <div class="search"><input type="text" id="gdSearch" placeholder="Search..." style="width:300px" oninput="searchGameData()"></div>
+  <div class="search"><input type="text" id="gdSearch" placeholder="搜索..." style="width:300px" oninput="searchGameData()"></div>
   <div class="scrollbox" id="gdResults" style="font-size:12px"></div>
 </div>
 
 <!-- HIDDEN ENTITIES -->
 <div class="panel" id="tab-hidden">
-  <h2>Hidden Entities / Landmarks</h2>
+  <h2>隐藏实体 / 地标</h2>
   <p style="font-size:12px;color:#aaa;margin-bottom:10px">
-    Patterns listed here are hidden from the radar overlay. <b>Ctrl+Click</b> on any entity or landmark in-game to add it here.
-    You can also use the <b>Hide</b> buttons in the Live Entities and Landmarks tabs.<br>
-    <b>Wildcards:</b> Use <code>*</code> (any chars) and <code>?</code> (single char). Example: <code>*StrongBox</code> hides everything ending in StrongBox.
-    Without wildcards, patterns match as substring (current behavior).
+    这里列出的匹配规则会从雷达 overlay 中隐藏对应实体或地标。可以用“实时实体”和“地标”页里的<b>隐藏</b>按钮添加。<br>
+    <b>通配符：</b><code>*</code> 表示任意字符，<code>?</code> 表示单个字符。例如 <code>*StrongBox</code> 会隐藏所有以 StrongBox 结尾的项。
+    不使用通配符时按子串匹配。
   </p>
   <div class="add-form">
-    <input type="text" id="hiddenAddPattern" placeholder="Pattern (e.g. AbyssCrack, *StrongBox, Breach*)" style="width:280px">
-    <button class="btn btn-add" onclick="addHidden()">Add</button>
+    <input type="text" id="hiddenAddPattern" placeholder="匹配规则，如 AbyssCrack, *StrongBox, Breach*" style="width:280px">
+    <button class="btn btn-add" onclick="addHidden()">添加</button>
   </div>
   <div style="margin-top:8px" id="hiddenList"></div>
 </div>
 
 <!-- KEYBINDS -->
 <div class="panel" id="tab-keybinds">
-  <h2>Hotkey Bindings</h2>
+  <h2>热键绑定</h2>
   <p style="font-size:12px;color:#aaa;margin-bottom:10px">
-    Click a key field and press any key to rebind. Click <b>Save</b> to persist. Changes take effect immediately after save.
+    点击按键输入框后按下新按键即可重绑。点击<b>保存</b>后立即生效并持久化。
   </p>
   <div id="keybindsBody"></div>
   <div style="margin-top:10px">
-    <button class="btn btn-save" onclick="saveKeybinds()">Save</button>
-    <span class="saved" id="kbSavedMsg">Saved!</span>
+    <button class="btn btn-save" onclick="saveKeybinds()">保存</button>
+    <span class="saved" id="kbSavedMsg">已保存！</span>
   </div>
 </div>
 
@@ -259,8 +258,8 @@ tr.watched{background:#2a3a2a}
 <div class="panel" id="tab-inspector">
   <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
     <select id="inspEntity" onchange="inspectEntity()" style="flex:1;min-width:200px;padding:4px;background:#1e1e1e;color:#eee;border:1px solid #555"></select>
-    <button onclick="loadInspectorEntities()" style="padding:4px 12px;cursor:pointer">Refresh</button>
-    <label style="font-size:12px"><input type="checkbox" id="inspAutoRefresh" checked> Auto-refresh</label>
+    <button onclick="loadInspectorEntities()" style="padding:4px 12px;cursor:pointer">刷新</button>
+    <label style="font-size:12px"><input type="checkbox" id="inspAutoRefresh" checked> 自动刷新</label>
     <span style="font-size:12px;color:#888" id="inspStatus"></span>
   </div>
   <div id="inspComponents" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px"></div>
@@ -271,6 +270,12 @@ tr.watched{background:#2a3a2a}
 let entities=[],watched=[],landmarks=[],db=[],settings={},catFilter='',dbCatFilter='';
 const $=id=>document.getElementById(id);
 const esc=s=>s.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+const CAT_ZH={Monster:'怪物',Player:'玩家',Npc:'NPC',Chest:'宝箱',Transition:'出口',Other:'其他'};
+const RARITY_ZH={Normal:'普通',Magic:'魔法',Rare:'稀有',Unique:'传奇',NonMonster:'-'};
+const LEAGUE_ZH={None:'',Expedition:'远征',Breach:'裂隙',Ritual:'祭祀',Delirium:'迷雾',Abyss:'深渊',Incursion:'穿越',Legion:'军团',Betrayal:'辛迪加',Ultimatum:'最后通牒',Sanctum:'圣所',Delve:'矿坑',Heist:'夺宝',Blight:'菌潮',Hellscape:'炼狱'};
+const catLabel=c=>c==='All'?'全部':(CAT_ZH[c]||c);
+const rarityLabel=r=>RARITY_ZH[r]||r;
+const leagueLabel=l=>LEAGUE_ZH[l]||l;
 
 function showTab(name){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -296,30 +301,30 @@ async function refresh(){
   try{
     const s=await(await fetch('/state')).json();
     $('status').innerHTML=s.inGame
-      ?`<span style="color:#fff">${s.areaName||s.areaCode}</span> <span style="color:#888">(${s.areaCode} · Act ${s.act||'?'} · lvl ${s.areaLevel}${s.isTown?' · Town':''}${s.hasWaypoint?' · WP':''})</span> | ${s.player?.name||''} Lv${s.player?.level||'?'} | HP ${s.hpPct.toFixed(0)}% | Entities: ${s.entityCount}`
-      :'Waiting for in-game...';
+      ?`<span style="color:#fff">${s.areaName||s.areaCode}</span> <span style="color:#888">(${s.areaCode} · 第 ${s.act||'?'} 章 · 等级 ${s.areaLevel}${s.isTown?' · 城镇':''}${s.hasWaypoint?' · 传送点':''})</span> | ${s.player?.name||''} 等级 ${s.player?.level||'?'} | 生命 ${s.hpPct.toFixed(0)}% | 实体：${s.entityCount}`
+      :'等待进入游戏...';
     const alive=$('aliveOnly').checked?'&alive=true':'';
     entities=await(await fetch('/entities?limit=1000'+alive)).json();
     renderEntities();
-  }catch(e){$('status').textContent='Connection lost';}
+  }catch(e){$('status').textContent='连接已断开';}
 }
 function renderEntities(){
   const search=$('search').value.toLowerCase();
   const cats=[...new Set(entities.map(e=>e.category))];
   $('catFilters').innerHTML=['All',...cats].map(c=>
-    `<button class="filter-btn ${catFilter===(c==='All'?'':c)?'active':''}" onclick="setCat('${c==='All'?'':c}')">${c}</button>`).join('');
+    `<button class="filter-btn ${catFilter===(c==='All'?'':c)?'active':''}" onclick="setCat('${c==='All'?'':c}')">${catLabel(c)}</button>`).join('');
   const f=entities.filter(e=>(!catFilter||e.category===catFilter)&&(!search||e.metadata.toLowerCase().includes(search)));
   $('entityBody').innerHTML=f.map(e=>`<tr class="${e.watched?'watched':''}">
-    <td><span class="cat cat-${e.category}">${e.category}</span>${e.boss?'<span style="color:#f44;font-weight:bold" title="Boss"> ★</span>':''}${e.league&&e.league!=='None'?`<span style="color:#0af;font-size:10px" title="League Mechanic"> ${e.league}</span>`:''}</td>
-    <td><span class="rarity-${e.rarity}">${e.rarity}</span></td>
-    <td class="meta-short" title="${e.metadata}">${e.name||e.metadata}${e.locked?'<span style="color:#fa0" title="Locked"> 🔒</span>':''}${e.large?'<span style="color:#0af" title="Large"> L</span>':''}</td>
+    <td><span class="cat cat-${e.category}">${catLabel(e.category)}</span>${e.boss?'<span style="color:#f44;font-weight:bold" title="首领"> ★</span>':''}${e.league&&e.league!=='None'?`<span style="color:#0af;font-size:10px" title="联盟机制"> ${leagueLabel(e.league)}</span>`:''}</td>
+    <td><span class="rarity-${e.rarity}">${rarityLabel(e.rarity)}</span></td>
+    <td class="meta-short" title="${e.metadata}">${e.name||e.metadata}${e.locked?'<span style="color:#fa0" title="锁定"> 🔒</span>':''}${e.large?'<span style="color:#0af" title="大型"> L</span>':''}</td>
     <td>${e.hpMax>0?e.hpCur+'/'+e.hpMax:'-'}</td><td>${e.dist}</td>
     <td style="white-space:nowrap">
       ${e.watched?`<button class="btn btn-rm" onclick="rmByMeta('${esc(e.metadata)}')">-</button>`
-                 :`<button class="btn btn-add" onclick="quickWatch('${esc(e.metadata)}')">Watch</button>`}
-      <button class="btn" style="background:#2a4a5a;color:#5cf" onclick="navigateTo('${esc(e.metadata)}')">Nav</button>
-      ${e.addr?`<button class="btn" style="background:#3a2a4a;color:#c8f" onclick="inspectFromList('${e.addr}')">Inspect</button>`:''}
-      <button class="btn" style="background:#4a3a1a;color:#fa0" onclick="hideFromEntity('${esc(e.metadata)}')">Hide</button>
+                 :`<button class="btn btn-add" onclick="quickWatch('${esc(e.metadata)}')">关注</button>`}
+      <button class="btn" style="background:#2a4a5a;color:#5cf" onclick="navigateTo('${esc(e.metadata)}')">导航</button>
+      ${e.addr?`<button class="btn" style="background:#3a2a4a;color:#c8f" onclick="inspectFromList('${e.addr}')">检查</button>`:''}
+      <button class="btn" style="background:#4a3a1a;color:#fa0" onclick="hideFromEntity('${esc(e.metadata)}')">隐藏</button>
     </td>
   </tr>`).join('');
 }
@@ -335,7 +340,7 @@ async function navigateTo(meta){
 // ── WATCHED ──
 async function quickWatch(meta){
   const parts=meta.split('/');const def=parts[parts.length-1].replace(/@\d+$/,'');
-  const nick=prompt('Nickname for radar:',def);if(nick===null)return;
+  const nick=prompt('雷达显示昵称：',def);if(nick===null)return;
   await doAdd(meta,nick||def,$('addColor').value);
 }
 async function addWatched(){
@@ -352,16 +357,16 @@ async function refreshWatched(){
   watched=await(await fetch('/api/watched')).json();
   $('watchedList').innerHTML=watched.map(w=>
     `<div class="watched-item">
-      <input type="color" value="${w.color}" onchange="editWatched('${esc(w.pattern)}',{color:this.value})" title="Color">
+      <input type="color" value="${w.color}" onchange="editWatched('${esc(w.pattern)}',{color:this.value})" title="颜色">
       <input type="text" value="${w.label}" style="width:120px;background:#1e1e28;border:1px solid #444;color:#afc;border-radius:3px;padding:2px 6px;font-size:13px;font-weight:bold"
-        onchange="editWatched('${esc(w.pattern)}',{label:this.value})" title="Nickname">
+        onchange="editWatched('${esc(w.pattern)}',{label:this.value})" title="昵称">
       <input type="number" value="${w.size??7}" min="1" max="30" step="0.5" style="width:55px;background:#1e1e28;border:1px solid #444;color:#78b4ff;border-radius:3px;padding:2px 4px;font-size:12px"
-        onchange="editWatched('${esc(w.pattern)}',{size:parseFloat(this.value)})" title="Dot size">
+        onchange="editWatched('${esc(w.pattern)}',{size:parseFloat(this.value)})" title="点大小">
       <div class="pattern" title="${w.pattern}">${w.pattern}</div>
-      <label style="font-size:11px;color:#888;white-space:nowrap"><input type="checkbox" ${w.enabled?'checked':''} onchange="editWatched('${esc(w.pattern)}',{enabled:this.checked})"> on</label>
+      <label style="font-size:11px;color:#888;white-space:nowrap"><input type="checkbox" ${w.enabled?'checked':''} onchange="editWatched('${esc(w.pattern)}',{enabled:this.checked})"> 启用</label>
       <button class="btn btn-rm" onclick="rmWatched('${esc(w.pattern)}')">X</button>
     </div>`
-  ).join('')||'<div style="color:#666;padding:8px">No watched entities yet.</div>';
+  ).join('')||'<div style="color:#666;padding:8px">还没有关注实体。</div>';
 }
 async function editWatched(pattern,changes){
   const w=watched.find(w=>w.pattern===pattern);if(!w)return;
@@ -380,10 +385,10 @@ async function importWatched(input){
   try{
     const r=await fetch('/api/watched/import',{method:'POST',headers:{'Content-Type':'application/json'},body:text});
     const res=await r.json();
-    if(res.ok){$('importMsg').textContent=`Imported ${res.imported} entries!`;$('importMsg').classList.add('show');setTimeout(()=>$('importMsg').classList.remove('show'),2000);}
-    else alert('Import error: '+res.error);
+    if(res.ok){$('importMsg').textContent=`已导入 ${res.imported} 条！`;$('importMsg').classList.add('show');setTimeout(()=>$('importMsg').classList.remove('show'),2000);}
+    else alert('导入失败：'+res.error);
     refreshWatched();refresh();
-  }catch(e){alert('Invalid JSON file');}
+  }catch(e){alert('JSON 文件无效');}
   input.value='';
 }
 
@@ -391,167 +396,175 @@ async function importWatched(input){
 const JUNK_PATTERNS=['/attachments','monstermods','microtransactions','/timelines/','stashskins','/fx/','/mat/','/ao/','/epk/','/graph/','/audio/','/pet/','/clone/','playersummoned','essencemoddaemons','tormentedspirits','/daemon/','bossroomminimapicon','/environment/','hairstyles','/outfits/','/runemarked'];
 function isJunk(p){const l=p.toLowerCase();return JUNK_PATTERNS.some(j=>l.includes(j));}
 
-async function loadDb(){$('dbCount').textContent='Loading...';db=await(await fetch('/api/database')).json();$('dbCount').textContent=db.length+' entities';filterDb();}
+async function loadDb(){$('dbCount').textContent='加载中...';db=await(await fetch('/api/database')).json();$('dbCount').textContent=db.length+' 个实体';filterDb();}
 function filterDb(){
   const s=($('dbSearch')?.value||'').toLowerCase();const cats=new Set();const hj=$('dbHideJunk')?.checked;
   const f=db.filter(p=>{if(hj&&isJunk(p))return false;if(s&&!p.toLowerCase().includes(s))return false;const c=getCat(p);cats.add(c);return!dbCatFilter||c===dbCatFilter;});
   $('dbCatFilters').innerHTML=['All',...[...cats].sort()].map(c=>
-    `<button class="filter-btn ${dbCatFilter===(c==='All'?'':c)?'active':''}" onclick="setDbCat('${c==='All'?'':c}')">${c}</button>`).join('');
+    `<button class="filter-btn ${dbCatFilter===(c==='All'?'':c)?'active':''}" onclick="setDbCat('${c==='All'?'':c}')">${catLabel(c)}</button>`).join('');
   const show=f.slice(0,200);
   $('dbBody').innerHTML=show.map(p=>{const isW=watched.some(w=>p.includes(w.pattern));
     return`<tr class="${isW?'watched':''}"><td><span class="db-cat">${getCat(p)}</span></td>
     <td class="db-path" title="${p}">${p}</td>
     <td>${isW?`<button class="btn btn-rm" onclick="rmByMeta('${esc(p)}')">-</button>`
-             :`<button class="btn btn-add" onclick="dbWatch('${esc(p)}')">Watch</button>`}</td></tr>`;
-  }).join('')+(f.length>200?`<tr><td colspan=3 style="color:#666">Showing 200/${f.length}. Narrow search.</td></tr>`:'');
-  $('dbCount').textContent=f.length+' matches';
+             :`<button class="btn btn-add" onclick="dbWatch('${esc(p)}')">关注</button>`}</td></tr>`;
+  }).join('')+(f.length>200?`<tr><td colspan=3 style="color:#666">显示 200/${f.length} 条，请缩小搜索范围。</td></tr>`:'');
+  $('dbCount').textContent=f.length+' 条匹配';
 }
 function setDbCat(c){dbCatFilter=c;filterDb();}
 function getCat(p){const parts=p.split('/');return parts.length>=2?parts[1]:'?';}
-async function dbWatch(path){const def=path.split('/').pop();const nick=prompt('Nickname for radar:',def);if(nick===null)return;await doAdd(path,nick||def,'#ff5555');filterDb();}
+async function dbWatch(path){const def=path.split('/').pop();const nick=prompt('雷达显示昵称：',def);if(nick===null)return;await doAdd(path,nick||def,'#ff5555');filterDb();}
 
 // ── SETTINGS ──
 const settingsDef = [
-  {section:'Visibility',items:[
-    {key:'showMonsters',label:'Monsters (all)',type:'bool'},
-    {key:'showRareMonsters',label:'Rare Monsters',type:'bool'},
-    {key:'showUniqueMonsters',label:'Unique Monsters',type:'bool'},
-    {key:'showNpcs',label:'NPCs',type:'bool'},
-    {key:'showChests',label:'Chests',type:'bool'},
-    {key:'showTransitions',label:'Transitions / Exits',type:'bool'},
-    {key:'showPlayers',label:'Other Players',type:'bool'},
-    {key:'showLandmarks',label:'Landmarks',type:'bool'},
-    {key:'showTerrain',label:'Terrain',type:'bool'},
-    {key:'showStatusBar',label:'Status HUD (top-left)',type:'bool'},
-    {key:'showWatchedLabels',label:'Watched Entity Labels',type:'bool'},
-    {key:'persistEntities',label:'Remember Entities Beyond Bubble',type:'bool'},
+  {section:'显示',items:[
+    {key:'showMonsters',label:'显示怪物（全部）',type:'bool'},
+    {key:'showRareMonsters',label:'显示稀有怪',type:'bool'},
+    {key:'showUniqueMonsters',label:'显示传奇怪',type:'bool'},
+    {key:'showNpcs',label:'显示 NPC',type:'bool'},
+    {key:'showChests',label:'显示宝箱',type:'bool'},
+    {key:'showTransitions',label:'显示区域出口',type:'bool'},
+    {key:'showPlayers',label:'显示其他玩家',type:'bool'},
+    {key:'showLandmarks',label:'显示地标',type:'bool'},
+    {key:'showTerrain',label:'显示地形',type:'bool'},
+    {key:'showStatusBar',label:'显示左上状态栏',type:'bool'},
+    {key:'showWatchedLabels',label:'显示关注实体标签',type:'bool'},
+    {key:'persistEntities',label:'离开同步范围后保留实体',type:'bool'},
   ]},
-  {section:'Label Toggles (dot still shown, only text hidden)',items:[
-    {key:'showTransitionLabels',label:'Transition / Exit Labels',type:'bool'},
-    {key:'showNpcLabels',label:'NPC Labels',type:'bool'},
-    {key:'showLandmarkLabels',label:'Landmark Labels',type:'bool'},
-    {key:'showPoiLabels',label:'POI Labels (non-NPC)',type:'bool'},
-    {key:'showMonsterLabels',label:'Monster Names (Rare/Unique)',type:'bool'},
-    {key:'showChestLabels',label:'Chest Type Labels',type:'bool'},
+  {section:'标签开关（隐藏文字但保留点位）',items:[
+    {key:'showTransitionLabels',label:'出口标签',type:'bool'},
+    {key:'showNpcLabels',label:'NPC 标签',type:'bool'},
+    {key:'showLandmarkLabels',label:'地标标签',type:'bool'},
+    {key:'showPoiLabels',label:'POI 标签（非 NPC）',type:'bool'},
+    {key:'showMonsterLabels',label:'怪物名称（稀有/传奇）',type:'bool'},
+    {key:'showChestLabels',label:'宝箱类型标签',type:'bool'},
   ]},
-  {section:'Visual Clutter Reduction',items:[
-    {key:'hideJunkEntities',label:'Hide Junk (attachments, effects, cosmetics)',type:'bool'},
-    {key:'hideUntargetable',label:'Hide Untargetable Entities',type:'bool'},
-    {key:'showDeadMonsters',label:'Show Dead Corpses (off = cleaner map)',type:'bool'},
-    {key:'showNormalMonsters',label:'Show Normal (white) Monsters',type:'bool'},
-    {key:'showNormalChests',label:'Show Normal Chests (not just Rare/Unique)',type:'bool'},
-    {key:'showFriendlyEntities',label:'Show Friendly Monsters (minions, allies)',type:'bool'},
-    {key:'showImmobileEntities',label:'Show Immobile Entities (speed=0, decorative)',type:'bool'},
-    {key:'entityDrawRange',label:'Max Draw Range (0 = unlimited, grid units)',type:'num',min:0,max:300,step:5},
-    {key:'minEntityHpPct',label:'Min HP% to Show (0 = show all, hides near-dead)',type:'num',min:0,max:50,step:5},
-    {key:'showDistanceRing',label:'Show Distance Ring on Map',type:'bool'},
-    {key:'distanceRingRadius',label:'Ring Radius (grid units)',type:'num',min:10,max:200,step:5},
+  {section:'减少视觉噪音',items:[
+    {key:'hideJunkEntities',label:'隐藏垃圾项（附件、特效、外观）',type:'bool'},
+    {key:'hideUntargetable',label:'隐藏不可选中实体',type:'bool'},
+    {key:'showDeadMonsters',label:'显示已死亡怪物',type:'bool'},
+    {key:'showNormalMonsters',label:'显示普通白怪',type:'bool'},
+    {key:'showNormalChests',label:'显示普通宝箱',type:'bool'},
+    {key:'showFriendlyEntities',label:'显示友方怪物（召唤物/盟友）',type:'bool'},
+    {key:'showImmobileEntities',label:'显示静止实体（速度 0/装饰物）',type:'bool'},
+    {key:'entityDrawRange',label:'最大绘制范围（0 = 不限制，网格单位）',type:'num',min:0,max:300,step:5},
+    {key:'minEntityHpPct',label:'显示最低生命百分比（0 = 全部）',type:'num',min:0,max:50,step:5},
+    {key:'showDistanceRing',label:'显示距离环',type:'bool'},
+    {key:'distanceRingRadius',label:'距离环半径（网格单位）',type:'num',min:10,max:200,step:5},
   ]},
-  {section:'Dot Sizes',items:[
-    {key:'monsterDotSize',label:'Normal Monster',type:'num',min:1,max:30,step:0.5},
-    {key:'magicDotSize',label:'Magic Monster',type:'num',min:1,max:30,step:0.5},
-    {key:'rareDotSize',label:'Rare Monster',type:'num',min:1,max:30,step:0.5},
-    {key:'uniqueDotSize',label:'Unique Monster',type:'num',min:1,max:30,step:0.5},
+  {section:'点位大小',items:[
+    {key:'monsterDotSize',label:'普通怪',type:'num',min:1,max:30,step:0.5},
+    {key:'magicDotSize',label:'魔法怪',type:'num',min:1,max:30,step:0.5},
+    {key:'rareDotSize',label:'稀有怪',type:'num',min:1,max:30,step:0.5},
+    {key:'uniqueDotSize',label:'传奇怪',type:'num',min:1,max:30,step:0.5},
     {key:'npcDotSize',label:'NPC',type:'num',min:1,max:30,step:0.5},
-    {key:'chestDotSize',label:'Chest',type:'num',min:1,max:30,step:0.5},
-    {key:'transitionDotSize',label:'Transition',type:'num',min:1,max:30,step:0.5},
-    {key:'playerDotSize',label:'Player',type:'num',min:1,max:30,step:0.5},
-    {key:'watchedDotSize',label:'Watched Entity',type:'num',min:1,max:30,step:0.5},
+    {key:'chestDotSize',label:'宝箱',type:'num',min:1,max:30,step:0.5},
+    {key:'transitionDotSize',label:'出口',type:'num',min:1,max:30,step:0.5},
+    {key:'playerDotSize',label:'玩家',type:'num',min:1,max:30,step:0.5},
+    {key:'watchedDotSize',label:'关注实体',type:'num',min:1,max:30,step:0.5},
   ]},
-  {section:'Outline',items:[
-    {key:'dotOutlineWidth',label:'Dot Outline Width',type:'num',min:0,max:10,step:0.5},
-    {key:'dotOutlineColor',label:'Dot Outline Color',type:'color'},
-    {key:'landmarkOutlineWidth',label:'Landmark Outline Width',type:'num',min:0,max:10,step:0.5},
+  {section:'描边',items:[
+    {key:'dotOutlineWidth',label:'点位描边宽度',type:'num',min:0,max:10,step:0.5},
+    {key:'dotOutlineColor',label:'点位描边颜色',type:'color'},
+    {key:'landmarkOutlineWidth',label:'地标描边宽度',type:'num',min:0,max:10,step:0.5},
   ]},
-  {section:'Font Sizes (no limit — scale up for 4K)',items:[
-    {key:'fontFamily',label:'Font Family',type:'text'},
-    {key:'statusFontSize',label:'Status Bar',type:'num',min:6,max:72,step:1},
-    {key:'landmarkFontSize',label:'Landmarks',type:'num',min:6,max:72,step:1},
-    {key:'transitionFontSize',label:'Transitions',type:'num',min:6,max:72,step:1},
-    {key:'chestFontSize',label:'Chests',type:'num',min:6,max:72,step:1},
-    {key:'watchedFontSize',label:'Watched Labels',type:'num',min:6,max:72,step:1},
-    {key:'nameplateFontSize',label:'HP Nameplates',type:'num',min:6,max:72,step:1},
+  {section:'字体大小（4K 可放大）',items:[
+    {key:'fontFamily',label:'字体',type:'text'},
+    {key:'statusFontSize',label:'状态栏',type:'num',min:6,max:72,step:1},
+    {key:'landmarkFontSize',label:'地标',type:'num',min:6,max:72,step:1},
+    {key:'transitionFontSize',label:'出口',type:'num',min:6,max:72,step:1},
+    {key:'chestFontSize',label:'宝箱',type:'num',min:6,max:72,step:1},
+    {key:'watchedFontSize',label:'关注标签',type:'num',min:6,max:72,step:1},
+    {key:'nameplateFontSize',label:'生命条铭牌',type:'num',min:6,max:72,step:1},
   ]},
-  {section:'Colors',items:[
-    {key:'monsterColor',label:'Normal Monster',type:'color'},
-    {key:'magicColor',label:'Magic Monster',type:'color'},
-    {key:'rareColor',label:'Rare Monster',type:'color'},
-    {key:'uniqueColor',label:'Unique Monster',type:'color'},
+  {section:'颜色',items:[
+    {key:'monsterColor',label:'普通怪',type:'color'},
+    {key:'magicColor',label:'魔法怪',type:'color'},
+    {key:'rareColor',label:'稀有怪',type:'color'},
+    {key:'uniqueColor',label:'传奇怪',type:'color'},
     {key:'npcColor',label:'NPC',type:'color'},
-    {key:'chestColor',label:'Chest',type:'color'},
-    {key:'transitionColor',label:'Transition',type:'color'},
-    {key:'playerColor',label:'Player',type:'color'},
-    {key:'landmarkColor',label:'Landmark',type:'color'},
-    {key:'watchedColor',label:'Watched Entity',type:'color'},
+    {key:'chestColor',label:'宝箱',type:'color'},
+    {key:'transitionColor',label:'出口',type:'color'},
+    {key:'playerColor',label:'玩家',type:'color'},
+    {key:'landmarkColor',label:'地标',type:'color'},
+    {key:'watchedColor',label:'关注实体',type:'color'},
   ]},
-  {section:'Terrain / Map Outline',items:[
-    {key:'terrainOpacity',label:'Overlay Opacity',type:'num',min:0,max:1,step:0.05},
-    {key:'terrainEdgeColor',label:'Edge Color',type:'color'},
-    {key:'terrainEdgeAlpha',label:'Edge Opacity',type:'num',min:0.1,max:1,step:0.05},
-    {key:'terrainInteriorAlpha',label:'Interior Opacity',type:'num',min:0,max:0.5,step:0.02},
+  {section:'地形 / 地图轮廓',items:[
+    {key:'terrainOpacity',label:'Overlay 不透明度',type:'num',min:0,max:1,step:0.05},
+    {key:'terrainEdgeColor',label:'边缘颜色',type:'color'},
+    {key:'terrainEdgeAlpha',label:'边缘不透明度',type:'num',min:0.1,max:1,step:0.05},
+    {key:'terrainInteriorAlpha',label:'内部不透明度',type:'num',min:0,max:0.5,step:0.02},
   ]},
-  {section:'Performance',items:[
-    {key:'fpsCap',label:'FPS Cap (15-360, lower = less CPU)',type:'num',min:15,max:360,step:5},
+  {section:'性能',items:[
+    {key:'fpsCap',label:'FPS 上限（15-360，越低越省 CPU）',type:'num',min:15,max:360,step:5},
   ]},
-  {section:'Calibration',items:[
-    {key:'resetCalibrationOnZoneChange',label:'Auto-reset on zone change',type:'bool'},
-    {key:'offsetX',label:'Offset X',type:'num',min:-50,max:50,step:0.5},
-    {key:'offsetY',label:'Offset Y',type:'num',min:-50,max:50,step:0.5},
-    {key:'scaleMul',label:'Scale',type:'num',min:0.3,max:3,step:0.02},
+  {section:'校准',items:[
+    {key:'resetCalibrationOnZoneChange',label:'换区自动重置校准',type:'bool'},
+    {key:'offsetX',label:'X 偏移',type:'num',min:-50,max:50,step:0.5},
+    {key:'offsetY',label:'Y 偏移',type:'num',min:-50,max:50,step:0.5},
+    {key:'scaleMul',label:'缩放',type:'num',min:0.3,max:3,step:0.02},
   ]},
-  {section:'Exploration Fog',items:[
-    {key:'showExplorationFog',label:'Show Unexplored Fog',type:'bool'},
-    {key:'fogOpacity',label:'Fog Darkness',type:'num',min:0.1,max:0.9,step:0.05},
-    {key:'fogGridStep',label:'Fog Resolution (lower = sharper, more CPU)',type:'num',min:1,max:8,step:1},
-    {key:'fogCellScale',label:'Fog Cell Size',type:'num',min:0.05,max:0.3,step:0.01},
+  {section:'探索迷雾',items:[
+    {key:'showExplorationFog',label:'显示未探索迷雾',type:'bool'},
+    {key:'fogOpacity',label:'迷雾暗度',type:'num',min:0.1,max:0.9,step:0.05},
+    {key:'fogGridStep',label:'迷雾分辨率（越低越清晰但更耗 CPU）',type:'num',min:1,max:8,step:1},
+    {key:'fogCellScale',label:'迷雾格大小',type:'num',min:0.05,max:0.3,step:0.01},
   ]},
-  {section:'Map Drawing',items:[
-    {key:'mapCenterYShift',label:'Map Center Y Shift',type:'num',min:-100,max:100,step:1},
-    {key:'playerBlipSize',label:'Player Blip Size (map)',type:'num',min:1,max:15,step:0.5},
+  {section:'地图绘制',items:[
+    {key:'mapCenterYShift',label:'地图中心 Y 偏移',type:'num',min:-100,max:100,step:1},
+    {key:'playerBlipSize',label:'玩家点大小（大地图）',type:'num',min:1,max:15,step:0.5},
 
-    {key:'landmarkIconSize',label:'Landmark Icon Size',type:'num',min:1,max:15,step:0.5},
-    {key:'pathEndMarkerSize',label:'Path End Marker Size',type:'num',min:1,max:15,step:0.5},
-    {key:'clickInspectDistance',label:'Click Inspect Distance (px)',type:'num',min:10,max:100,step:5},
+    {key:'landmarkIconSize',label:'地标图标大小',type:'num',min:1,max:15,step:0.5},
+    {key:'pathEndMarkerSize',label:'路线终点标记大小',type:'num',min:1,max:15,step:0.5},
+    {key:'clickInspectDistance',label:'点击检查距离（像素）',type:'num',min:10,max:100,step:5},
   ]},
-  {section:'Boss Highlight',items:[
-    {key:'showBossHighlight',label:'Highlight Bosses (large star icon)',type:'bool'},
-    {key:'bossDotSize',label:'Boss Dot Size',type:'num',min:3,max:15,step:0.5},
+  {section:'首领高亮',items:[
+    {key:'showBossHighlight',label:'高亮首领（大星形图标）',type:'bool'},
+    {key:'bossDotSize',label:'首领点大小',type:'num',min:3,max:15,step:0.5},
   ]},
-  {section:'Nameplate HP Bars',items:[
-    {key:'showNameplates',label:'Show HP Bars',type:'bool'},
-    {key:'nameplateBarWidth',label:'Bar Width Scale',type:'num',min:0.3,max:3,step:0.1},
-    {key:'nameplateBarHeight',label:'Bar Height (px)',type:'num',min:1,max:20,step:1},
-    {key:'nameplateOffsetY',label:'Y Offset (negative = above)',type:'num',min:-100,max:50,step:1},
-    {key:'nameplateFontSize',label:'Name Font Size',type:'num',min:6,max:30,step:1},
+  {section:'生命条铭牌',items:[
+    {key:'showNameplates',label:'显示生命条',type:'bool'},
+    {key:'nameplateBarWidth',label:'条宽比例',type:'num',min:0.3,max:3,step:0.1},
+    {key:'nameplateBarHeight',label:'条高（像素）',type:'num',min:1,max:20,step:1},
+    {key:'nameplateOffsetY',label:'Y 偏移（负数为上方）',type:'num',min:-100,max:50,step:1},
+    {key:'nameplateFontSize',label:'名称字体大小',type:'num',min:6,max:30,step:1},
   ]},
-  {section:'Pathfinding',items:[
-    {key:'showPath',label:'Enable Pathfinding',type:'bool'},
-    {key:'showGroundWaypoints',label:'Show Ground Waypoints (when map closed)',type:'bool'},
-    {key:'pathTarget',label:'Target Pattern',type:'text'},
-    {key:'pathColor',label:'Path Color',type:'color'},
-    {key:'pathWidth',label:'Path Width',type:'num',min:0.5,max:8,step:0.5},
-    {key:'pathMaxNodes',label:'Max Nodes (higher = longer paths, more CPU)',type:'num',min:50000,max:2000000,step:50000},
+  {section:'路线导航',items:[
+    {key:'showPath',label:'启用路线导航',type:'bool'},
+    {key:'showGroundWaypoints',label:'地图关闭时显示地面路线点',type:'bool'},
+    {key:'pathTarget',label:'目标匹配片段',type:'text'},
+    {key:'pathColor',label:'路线颜色',type:'color'},
+    {key:'pathWidth',label:'路线宽度',type:'num',min:0.5,max:8,step:0.5},
+    {key:'pathMaxNodes',label:'最大搜索节点（越高路径越远但更耗 CPU）',type:'num',min:50000,max:2000000,step:50000},
   ]},
-  {section:'Auto-Flask',items:[
-    {key:'hpThreshold',label:'HP Threshold %',type:'num',min:5,max:95,step:5},
-    {key:'manaThreshold',label:'Mana Threshold %',type:'num',min:5,max:95,step:5},
-    {key:'flaskLifeKey',label:'Life Flask Key (VK code, 0x31=1)',type:'num',min:0,max:255,step:1},
-    {key:'flaskManaKey',label:'Mana Flask Key (VK code, 0x32=2)',type:'num',min:0,max:255,step:1},
-    {key:'flaskLifeCooldownMs',label:'Life Flask Cooldown (ms)',type:'num',min:500,max:10000,step:100},
-    {key:'flaskManaCooldownMs',label:'Mana Flask Cooldown (ms)',type:'num',min:500,max:10000,step:100},
+  {section:'自动药剂',items:[
+    {key:'hpThreshold',label:'生命阈值 %',type:'num',min:5,max:95,step:5},
+    {key:'manaThreshold',label:'魔力阈值 %',type:'num',min:5,max:95,step:5},
+    {key:'flaskLifeKey',label:'生命药剂按键（VK 码，0x31=1）',type:'num',min:0,max:255,step:1},
+    {key:'flaskManaKey',label:'魔力药剂按键（VK 码，0x32=2）',type:'num',min:0,max:255,step:1},
+    {key:'flaskLifeCooldownMs',label:'生命药剂冷却（毫秒）',type:'num',min:500,max:10000,step:100},
+    {key:'flaskManaCooldownMs',label:'魔力药剂冷却（毫秒）',type:'num',min:500,max:10000,step:100},
   ]},
-  {section:'Auto-Logout (kill game on low HP)',items:[
-    {key:'autoLogoutEnabled',label:'Enable Auto-Logout',type:'bool'},
-    {key:'autoLogoutHpThreshold',label:'HP Threshold % (quit at or below)',type:'num',min:5,max:80,step:5},
+  {section:'自动退出（低血量强制关闭游戏）',items:[
+    {key:'autoLogoutEnabled',label:'启用自动退出',type:'bool'},
+    {key:'autoLogoutHpThreshold',label:'生命阈值 %（低于或等于时退出）',type:'num',min:5,max:80,step:5},
+  ]},
+  {section:'Atlas',items:[
+    {key:'atlasOverlayEnabled',label:'启用 Atlas 悬浮层',type:'bool'},
+    {key:'atlasDrawAll',label:'绘制全部 Atlas 节点',type:'bool'},
+    {key:'atlasHighlightTags',label:'高亮标签（逗号分隔）',type:'csv'},
+    {key:'atlasArrowTags',label:'箭头指向标签（逗号分隔）',type:'csv'},
+    {key:'atlasHighlightColors',label:'标签颜色（格式：标签=#RRGGBB, 标签2=#RRGGBB）',type:'kvpairs'},
   ]},
 ];
 
 async function loadSettings(){
   settings=await(await fetch('/api/settings')).json();
   let html='';
-  for(const sec of settingsDef){
-    const collapsed=sec.section.startsWith('Game Tweaks')||sec.section==='DevTest';
-    const sid='sec_'+sec.section.replace(/[^a-zA-Z]/g,'');
+  for(let si=0; si<settingsDef.length; si++){
+    const sec=settingsDef[si];
+    const collapsed=sec.section.startsWith('游戏调试')||sec.section==='开发测试';
+    const sid='sec_'+si;
     html+=`<div class="section"><h3 style="cursor:pointer;user-select:none" onclick="document.getElementById('${sid}').style.display=document.getElementById('${sid}').style.display==='none'?'':'none'">${collapsed?'▶':'▼'} ${sec.section}</h3><div id="${sid}" style="${collapsed?'display:none':''}">`;
     for(const item of sec.items){
       const v=settings[item.key]??'';
@@ -561,7 +574,11 @@ async function loadSettings(){
       else if(item.type==='color')
         html+=`<input type="color" value="${v}" onchange="setSetting('${item.key}',this.value)">`;
       else if(item.type==='text')
-        html+=`<input type="text" value="${v||''}" style="width:250px" onchange="setSetting('${item.key}',this.value)" placeholder="e.g. AreaTransition, Waypoint">`;
+        html+=`<input type="text" value="${v||''}" style="width:250px" onchange="setSetting('${item.key}',this.value)" placeholder="如 AreaTransition, Waypoint">`;
+      else if(item.type==='csv')
+        html+=`<input type="text" value="${Array.isArray(v)?v.join(', '):v||''}" style="width:320px" onchange="setSetting('${item.key}',this.value.split(',').map(x=>x.trim()).filter(Boolean))" placeholder="如 Breach, Ritual, Boss">`;
+      else if(item.type==='kvpairs')
+        html+=`<input type="text" value="${v&&typeof v==='object'?Object.entries(v).map(([k,val])=>k+'='+val).join(', '):''}" style="width:420px" onchange="setSetting('${item.key}',Object.fromEntries(this.value.split(',').map(x=>x.trim()).filter(Boolean).map(x=>{const i=x.indexOf('=');return i>0?[x.slice(0,i).trim(),x.slice(i+1).trim()]:[x,'#ff5555']})))" placeholder="如 Breach=#a64dff, Ritual=#ff3355">`;
       else if(item.type==='num')
         html+=`<input type="range" min="${item.min}" max="${item.max}" step="${item.step}" value="${v}"
           oninput="setSetting('${item.key}',parseFloat(this.value));this.nextElementSibling.textContent=this.value">
@@ -588,15 +605,15 @@ async function importSettings(e){
     const imported=JSON.parse(text);
     await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(imported)});
     await loadSettings();
-    $('savedMsg').textContent='Imported!';$('savedMsg').classList.add('show');setTimeout(()=>{$('savedMsg').classList.remove('show');$('savedMsg').textContent='Saved!';},2000);
-  }catch(ex){alert('Invalid settings file: '+ex.message)}
+    $('savedMsg').textContent='已导入！';$('savedMsg').classList.add('show');setTimeout(()=>{$('savedMsg').classList.remove('show');$('savedMsg').textContent='已保存！';},2000);
+  }catch(ex){alert('设置文件无效：'+ex.message)}
   e.target.value='';
 }
 async function resetSettings(){
-  if(!confirm('Reset ALL settings to defaults? This cannot be undone.'))return;
+  if(!confirm('确认把所有设置重置为默认值？此操作不可撤销。'))return;
   await fetch('/api/settings/reset',{method:'POST'});
   await loadSettings();
-  $('savedMsg').textContent='Reset!';$('savedMsg').classList.add('show');setTimeout(()=>{$('savedMsg').classList.remove('show');$('savedMsg').textContent='Saved!';},2000);
+  $('savedMsg').textContent='已重置！';$('savedMsg').classList.add('show');setTimeout(()=>{$('savedMsg').classList.remove('show');$('savedMsg').textContent='已保存！';},2000);
 }
 
 // ── AUTO-SKILLS ──
@@ -612,29 +629,29 @@ function parseKey(s){
 
 async function refreshRules(){
   const data=await(await fetch('/api/rules')).json();
-  $('rulesToggle').textContent=data.enabled?'ON':'OFF';
+  $('rulesToggle').textContent=data.enabled?'已开启':'已关闭';
   $('rulesToggle').style.background=data.enabled?'#2a5a2a':'#5a2a2a';
   $('rulesList').innerHTML=data.rules.map((r,i)=>
     `<div class="watched-item" style="flex-wrap:wrap">
       <label><input type="checkbox" ${r.enabled?'checked':''} onchange="updateRule(${i},{enabled:this.checked})"></label>
       <input type="text" value="${r.name}" style="width:90px;background:#1e1e28;border:1px solid #444;color:#afc;border-radius:3px;padding:2px 6px;font-size:13px;font-weight:bold"
         onchange="updateRule(${i},{name:this.value})">
-      <span style="color:#78b4ff;font-size:12px">Key: ${vkName(r.key)}</span>
-      <span style="color:#aaa;font-size:11px">CD: ${r.cooldownSec}s</span>
-      ${r.hpBelow?`<span style="color:#f88;font-size:11px">HP&lt;${r.hpBelow}%</span>`:''}
-      ${r.hpAbove?`<span style="color:#f88;font-size:11px">HP&gt;${r.hpAbove}%</span>`:''}
-      ${r.manaBelow?`<span style="color:#88f;font-size:11px">Mana&lt;${r.manaBelow}%</span>`:''}
-      ${r.esBelow?`<span style="color:#8ff;font-size:11px">ES&lt;${r.esBelow}%</span>`:''}
-      ${r.enemiesNearby?`<span style="color:#ff8;font-size:11px">Enemies&ge;${r.enemiesNearby}</span>`:''}
-      ${r.bossNearby===true?'<span style="color:#f80;font-size:11px">Boss nearby</span>':''}
-      ${r.bossNearby===false?'<span style="color:#888;font-size:11px">No boss</span>':''}
-      ${r.waitSec?`<span style="color:#8f8;font-size:11px">Wait ${r.waitSec}s</span>`:''}
-      ${r.requireKeyHeld?`<span style="color:#c8f;font-size:11px">Hold:${vkName(r.requireKeyHeld)}</span>`:''}
-      ${r.playerMoving===true?'<span style="color:#aaf;font-size:11px">Moving</span>':''}
-      ${r.playerMoving===false?'<span style="color:#aaf;font-size:11px">Standing</span>':''}
+      <span style="color:#78b4ff;font-size:12px">按键：${vkName(r.key)}</span>
+      <span style="color:#aaa;font-size:11px">冷却：${r.cooldownSec}s</span>
+      ${r.hpBelow?`<span style="color:#f88;font-size:11px">生命&lt;${r.hpBelow}%</span>`:''}
+      ${r.hpAbove?`<span style="color:#f88;font-size:11px">生命&gt;${r.hpAbove}%</span>`:''}
+      ${r.manaBelow?`<span style="color:#88f;font-size:11px">魔力&lt;${r.manaBelow}%</span>`:''}
+      ${r.esBelow?`<span style="color:#8ff;font-size:11px">能盾&lt;${r.esBelow}%</span>`:''}
+      ${r.enemiesNearby?`<span style="color:#ff8;font-size:11px">敌人&ge;${r.enemiesNearby}</span>`:''}
+      ${r.bossNearby===true?'<span style="color:#f80;font-size:11px">附近有首领</span>':''}
+      ${r.bossNearby===false?'<span style="color:#888;font-size:11px">附近无首领</span>':''}
+      ${r.waitSec?`<span style="color:#8f8;font-size:11px">等待 ${r.waitSec}s</span>`:''}
+      ${r.requireKeyHeld?`<span style="color:#c8f;font-size:11px">按住：${vkName(r.requireKeyHeld)}</span>`:''}
+      ${r.playerMoving===true?'<span style="color:#aaf;font-size:11px">移动中</span>':''}
+      ${r.playerMoving===false?'<span style="color:#aaf;font-size:11px">站定</span>':''}
       <button class="btn btn-rm" style="margin-left:auto" onclick="deleteRule(${i})">X</button>
     </div>`
-  ).join('')||'<div style="color:#666;padding:8px">No rules. Add one below.</div>';
+  ).join('')||'<div style="color:#666;padding:8px">还没有规则，请在下方添加。</div>';
 }
 async function toggleRules(){await fetch('/api/rules/toggle');refreshRules();}
 async function updateRule(i,changes){
@@ -645,7 +662,7 @@ async function updateRule(i,changes){
 }
 async function deleteRule(i){await fetch('/api/rules?index='+i,{method:'DELETE'});refreshRules();}
 async function addRule(){
-  const name=$('ruleAddName').value||'Skill';
+  const name=$('ruleAddName').value||'技能';
   const key=parseKey($('ruleAddKey').value||'Q');
   const cd=parseFloat($('ruleAddCd').value)||2;
   const hp=$('ruleAddHp').value?parseFloat($('ruleAddHp').value):null;
@@ -674,10 +691,10 @@ async function refreshPathing(){
       <input type="text" value="${t.label}" style="width:120px;background:#1e1e28;border:1px solid #444;color:#afc;border-radius:3px;padding:2px 6px;font-size:13px;font-weight:bold"
         onchange="editPathTarget('${esc(t.pattern)}',{label:this.value})">
       <div class="pattern" title="${t.pattern}">${t.pattern}</div>
-      ${i===cur?'<span style="color:#5cf;font-size:11px;font-weight:bold">ACTIVE</span>':''}
+      ${i===cur?'<span style="color:#5cf;font-size:11px;font-weight:bold">当前</span>':''}
       <button class="btn btn-rm" onclick="rmPathTarget('${esc(t.pattern)}')">X</button>
     </div>`
-  ).join('')||'<div style="color:#666;padding:8px">No pathing targets. Add patterns above.</div>';
+  ).join('')||'<div style="color:#666;padding:8px">还没有路线目标，请在上方添加匹配片段。</div>';
 }
 async function addPathTarget(){
   const p=$('pathAddPattern').value.trim(),l=$('pathAddLabel').value.trim();
@@ -702,74 +719,74 @@ function filterLandmarks(){
   const s=($('lmSearch')?.value||'').toLowerCase();
   $('lmBody').innerHTML=landmarks.filter(l=>!s||l.name.toLowerCase().includes(s)||l.path.toLowerCase().includes(s))
     .map(l=>`<tr><td>${l.name}</td><td class="meta-short" title="${l.path}">${l.path}</td><td>${l.tiles}</td><td>${l.dist}</td>
-      <td><button class="btn" style="background:#4a3a1a;color:#fa0" onclick="hideFromLandmark('${esc(l.name)}','${esc(l.path)}')">Hide</button></td></tr>`).join('');
+      <td><button class="btn" style="background:#4a3a1a;color:#fa0" onclick="hideFromLandmark('${esc(l.name)}','${esc(l.path)}')">隐藏</button></td></tr>`).join('');
 }
 
 // ── DevTest ──
 const devtestDef = [
-  {section:'Rendering (game memory writes)',items:[
-    {key:'tweakHideNormalLifeBars',label:'Hide Normal Monster HP Bars',type:'bool'},
-    {key:'tweakHideMagicLifeBars',label:'Hide Normal+Magic HP Bars',type:'bool'},
-    {key:'tweakHideAllLifeBars',label:'Hide ALL Monster HP Bars',type:'bool'},
-    {key:'tweakHideBuffVisuals',label:'Hide Buff/Debuff VFX',type:'bool'},
-    {key:'tweakHideNormalRendering',label:'Make Normal Monsters Invisible',type:'bool'},
-    {key:'tweakForceShowHover',label:'Force Hover Highlight',type:'bool'},
-    {key:'tweakDisableSelectionBoxes',label:'Disable Selection Boxes',type:'bool'},
-    {key:'tweakHideInfoDisplay',label:'Hide Info Tooltips',type:'bool'},
-    {key:'tweakHideTalismanIcons',label:'Hide Overhead Icons',type:'bool'},
-    {key:'tweakForceOutline',label:'Force Outline Glow',type:'bool'},
+  {section:'渲染（写入游戏内存）',items:[
+    {key:'tweakHideNormalLifeBars',label:'隐藏普通怪血条',type:'bool'},
+    {key:'tweakHideMagicLifeBars',label:'隐藏普通+魔法怪血条',type:'bool'},
+    {key:'tweakHideAllLifeBars',label:'隐藏全部怪物血条',type:'bool'},
+    {key:'tweakHideBuffVisuals',label:'隐藏 Buff/Debuff 特效',type:'bool'},
+    {key:'tweakHideNormalRendering',label:'让普通怪不可见',type:'bool'},
+    {key:'tweakForceShowHover',label:'强制悬停高亮',type:'bool'},
+    {key:'tweakDisableSelectionBoxes',label:'禁用选择框',type:'bool'},
+    {key:'tweakHideInfoDisplay',label:'隐藏信息提示',type:'bool'},
+    {key:'tweakHideTalismanIcons',label:'隐藏头顶图标',type:'bool'},
+    {key:'tweakForceOutline',label:'强制轮廓发光',type:'bool'},
   ]},
-  {section:'Physics & Collision',items:[
-    {key:'tweakDisableMonsterBlocking',label:'Disable Monster Collision',type:'bool'},
-    {key:'tweakDisableMonsterPush',label:'Disable Push',type:'bool'},
-    {key:'tweakEnablePhaseThrough',label:'Phase Through Terrain',type:'bool'},
+  {section:'物理与碰撞',items:[
+    {key:'tweakDisableMonsterBlocking',label:'禁用怪物阻挡',type:'bool'},
+    {key:'tweakDisableMonsterPush',label:'禁用推挤',type:'bool'},
+    {key:'tweakEnablePhaseThrough',label:'穿过地形',type:'bool'},
   ]},
-  {section:'Targeting',items:[
-    {key:'tweakForceAllTargetable',label:'Force All Targetable',type:'bool'},
-    {key:'tweakForceAllAttackable',label:'Force All Attackable',type:'bool'},
+  {section:'目标选择',items:[
+    {key:'tweakForceAllTargetable',label:'强制全部可选中',type:'bool'},
+    {key:'tweakForceAllAttackable',label:'强制全部可攻击',type:'bool'},
   ]},
-  {section:'Behavior',items:[
-    {key:'tweakFreezeNormalMonsters',label:'Freeze Normals (speed=0)',type:'bool'},
-    {key:'tweakPreventCorpseSinking',label:'Prevent Corpse Sinking',type:'bool'},
+  {section:'行为',items:[
+    {key:'tweakFreezeNormalMonsters',label:'冻结普通怪（速度 0）',type:'bool'},
+    {key:'tweakPreventCorpseSinking',label:'阻止尸体下沉',type:'bool'},
   ]},
-  {section:'World Interaction',items:[
-    {key:'tweakInstantTransitions',label:'Instant Zone Transitions',type:'bool'},
-    {key:'tweakUnblockDoors',label:'Unblock Doors',type:'bool'},
-    {key:'tweakUnlockChests',label:'Unlock Chests',type:'bool'},
-    {key:'tweakOpenChestsOnDamage',label:'Open Chests on Damage',type:'bool'},
+  {section:'世界交互',items:[
+    {key:'tweakInstantTransitions',label:'瞬间切换区域',type:'bool'},
+    {key:'tweakUnblockDoors',label:'解除门阻挡',type:'bool'},
+    {key:'tweakUnlockChests',label:'解锁宝箱',type:'bool'},
+    {key:'tweakOpenChestsOnDamage',label:'受击时打开宝箱',type:'bool'},
   ]},
-  {section:'Entity Manipulation',items:[
-    {key:'tweakSwapTeamToFriendly',label:'Make Monsters Friendly',type:'bool'},
-    {key:'tweakMakeAllBoss',label:'Flag All as Boss',type:'bool'},
-    {key:'tweakRemoveBossFlag',label:'Remove Boss Flag',type:'bool'},
-    {key:'tweakEntityScale',label:'Scale Override (0=off)',type:'num',min:0,max:5,step:0.1},
-    {key:'tweakEntityColorR',label:'Tint R (-1=off)',type:'num',min:-1,max:2,step:0.1},
-    {key:'tweakEntityColorG',label:'Tint G (-1=off)',type:'num',min:-1,max:2,step:0.1},
-    {key:'tweakEntityColorB',label:'Tint B (-1=off)',type:'num',min:-1,max:2,step:0.1},
-    {key:'tweakLabelViewDistance',label:'Label Distance (0=off)',type:'num',min:0,max:500,step:10},
+  {section:'实体修改',items:[
+    {key:'tweakSwapTeamToFriendly',label:'让怪物变为友方',type:'bool'},
+    {key:'tweakMakeAllBoss',label:'全部标记为首领',type:'bool'},
+    {key:'tweakRemoveBossFlag',label:'移除首领标记',type:'bool'},
+    {key:'tweakEntityScale',label:'缩放覆盖（0=关闭）',type:'num',min:0,max:5,step:0.1},
+    {key:'tweakEntityColorR',label:'染色 R（-1=关闭）',type:'num',min:-1,max:2,step:0.1},
+    {key:'tweakEntityColorG',label:'染色 G（-1=关闭）',type:'num',min:-1,max:2,step:0.1},
+    {key:'tweakEntityColorB',label:'染色 B（-1=关闭）',type:'num',min:-1,max:2,step:0.1},
+    {key:'tweakLabelViewDistance',label:'标签显示距离（0=关闭）',type:'num',min:0,max:500,step:10},
   ]},
-  {section:'Scope',items:[
-    {key:'tweakApplyToNpcs',label:'Apply to NPCs',type:'bool'},
-    {key:'tweakApplyToChests',label:'Apply to Chests',type:'bool'},
+  {section:'作用范围',items:[
+    {key:'tweakApplyToNpcs',label:'应用到 NPC',type:'bool'},
+    {key:'tweakApplyToChests',label:'应用到宝箱',type:'bool'},
   ]},
-  {section:'Raw Field Writes (very experimental)',items:[
-    {key:'tweakDevHideHover',label:'Hide Hover',type:'bool'},
-    {key:'tweakDevFadeArrows',label:'Fade Arrows',type:'bool'},
-    {key:'tweakDevDisableLight',label:'Disable Lights',type:'bool'},
-    {key:'tweakDevFixedSelectionSize',label:'Fixed Selection Size',type:'bool'},
-    {key:'tweakDevBBoxIgnoreGround',label:'BBox Ignore Ground',type:'bool'},
-    {key:'tweakDevFaceWindDirection',label:'Face Wind',type:'bool'},
-    {key:'tweakDevDampenHeight',label:'Dampen Height',type:'bool'},
-    {key:'tweakDevHeightOffset',label:'Height Offset',type:'num',min:-200,max:200,step:5},
-    {key:'tweakDevSelectionHeightOverride',label:'Selection Height',type:'num',min:0,max:500,step:10},
-    {key:'tweakDevLockOrientation',label:'Lock Orientation',type:'bool'},
-    {key:'tweakDevMakeFlying',label:'Make Flying',type:'bool'},
-    {key:'tweakDevMakeStatic',label:'Make Static',type:'bool'},
-    {key:'tweakDevFaceMovementDir',label:'Face Movement Dir',type:'bool'},
-    {key:'tweakDevAvoidOthers',label:'Disable Avoidance',type:'bool'},
-    {key:'tweakDevLockAnimation',label:'Lock Animation',type:'bool'},
-    {key:'tweakDevCorpseUsable',label:'Corpse Usable',type:'bool'},
-    {key:'tweakDevNoCorpseMarker',label:'No Corpse Marker',type:'bool'},
+  {section:'原始字段写入（高度实验）',items:[
+    {key:'tweakDevHideHover',label:'隐藏悬停',type:'bool'},
+    {key:'tweakDevFadeArrows',label:'淡化箭头',type:'bool'},
+    {key:'tweakDevDisableLight',label:'禁用光照',type:'bool'},
+    {key:'tweakDevFixedSelectionSize',label:'固定选择尺寸',type:'bool'},
+    {key:'tweakDevBBoxIgnoreGround',label:'碰撞盒忽略地面',type:'bool'},
+    {key:'tweakDevFaceWindDirection',label:'面向风向',type:'bool'},
+    {key:'tweakDevDampenHeight',label:'降低高度变化',type:'bool'},
+    {key:'tweakDevHeightOffset',label:'高度偏移',type:'num',min:-200,max:200,step:5},
+    {key:'tweakDevSelectionHeightOverride',label:'选择高度覆盖',type:'num',min:0,max:500,step:10},
+    {key:'tweakDevLockOrientation',label:'锁定朝向',type:'bool'},
+    {key:'tweakDevMakeFlying',label:'设为飞行',type:'bool'},
+    {key:'tweakDevMakeStatic',label:'设为静态',type:'bool'},
+    {key:'tweakDevFaceMovementDir',label:'面向移动方向',type:'bool'},
+    {key:'tweakDevAvoidOthers',label:'禁用避让',type:'bool'},
+    {key:'tweakDevLockAnimation',label:'锁定动画',type:'bool'},
+    {key:'tweakDevCorpseUsable',label:'尸体可交互',type:'bool'},
+    {key:'tweakDevNoCorpseMarker',label:'无尸体标记',type:'bool'},
   ]},
 ];
 function loadDevTest(){
@@ -810,10 +827,10 @@ async function loadGdPins(){
   gdMode='pins';
   const data=await(await fetch('/api/gamedata/pins')).json();
   gdData=data.pins||[];
-  $('gdResults').innerHTML=`<h3 style="color:#0af">${data.area} — ${gdData.length} pins</h3>`+
-    (gdData.length?`<table style="width:100%"><thead><tr><th>Name</th><th>ID</th><th>Type</th></tr></thead><tbody>`+
+  $('gdResults').innerHTML=`<h3 style="color:#0af">${data.area} - ${gdData.length} 个标记</h3>`+
+    (gdData.length?`<table style="width:100%"><thead><tr><th>名称</th><th>ID</th><th>类型</th></tr></thead><tbody>`+
     gdData.map(p=>`<tr><td>${p.name}</td><td style="color:#888">${p.id}</td><td>${p.type}</td></tr>`).join('')+
-    '</tbody></table>':'<p style="color:#888">No map pins for this zone</p>');
+    '</tbody></table>':'<p style="color:#888">当前区域没有地图标记</p>');
 }
 function searchGameData(){
   if(gdMode==='areas')loadGdAreas();
@@ -821,11 +838,11 @@ function searchGameData(){
 }
 function renderGd(){
   if(gdMode==='areas'){
-    $('gdResults').innerHTML=`<p style="color:#888">${gdData.length} areas</p><table style="width:100%"><thead><tr><th>Code</th><th>Name</th><th>Act</th><th>Lvl</th><th>Town</th><th>WP</th></tr></thead><tbody>`+
-      gdData.map(a=>`<tr><td style="color:#0af">${a.code}</td><td>${a.name}</td><td>${a.act}</td><td>${a.level}</td><td>${a.town?'Yes':''}</td><td>${a.waypoint?'Yes':''}</td></tr>`).join('')+
+    $('gdResults').innerHTML=`<p style="color:#888">${gdData.length} 个区域</p><table style="width:100%"><thead><tr><th>代码</th><th>名称</th><th>章节</th><th>等级</th><th>城镇</th><th>传送点</th></tr></thead><tbody>`+
+      gdData.map(a=>`<tr><td style="color:#0af">${a.code}</td><td>${a.name}</td><td>${a.act}</td><td>${a.level}</td><td>${a.town?'是':''}</td><td>${a.waypoint?'是':''}</td></tr>`).join('')+
       '</tbody></table>';
   } else if(gdMode==='buffs'){
-    $('gdResults').innerHTML=`<p style="color:#888">${gdData.length} buffs</p><table style="width:100%"><thead><tr><th>ID</th><th>Name</th><th>Description</th></tr></thead><tbody>`+
+    $('gdResults').innerHTML=`<p style="color:#888">${gdData.length} 个增益</p><table style="width:100%"><thead><tr><th>ID</th><th>名称</th><th>描述</th></tr></thead><tbody>`+
       gdData.map(b=>`<tr><td style="color:#888;font-size:10px">${b.id}</td><td style="color:#0af">${b.name}</td><td style="font-size:11px">${b.description||''}</td></tr>`).join('')+
       '</tbody></table>';
   }
@@ -833,33 +850,33 @@ function renderGd(){
 
 // ── MINIMAP ──
 const minimapDef = [
-  {section:'General',items:[
-    {key:'showMinimap',label:'Show Minimap (when big map closed)',type:'bool'},
-    {key:'minimapSize',label:'Size (px)',type:'num',min:100,max:500,step:10},
-    {key:'minimapScale',label:'Zoom',type:'num',min:0.1,max:2,step:0.05},
-    {key:'minimapOpacity',label:'Opacity',type:'num',min:0.2,max:1,step:0.05},
-    {key:'minimapPosition',label:'Corner (topleft, topright, bottomleft, bottomright)',type:'text'},
-    {key:'minimapOffsetX',label:'Offset X (px)',type:'num',min:-2000,max:2000,step:5},
-    {key:'minimapOffsetY',label:'Offset Y (px)',type:'num',min:-2000,max:2000,step:5},
-    {key:'minimapPlayerBlipSize',label:'Player Blip Size',type:'num',min:1,max:10,step:0.5},
-    {key:'minimapDotScale',label:'Dot Scale (all dots)',type:'num',min:0.3,max:3,step:0.1},
+  {section:'通用',items:[
+    {key:'showMinimap',label:'大地图关闭时显示小地图',type:'bool'},
+    {key:'minimapSize',label:'大小（像素）',type:'num',min:100,max:500,step:10},
+    {key:'minimapScale',label:'缩放',type:'num',min:0.1,max:2,step:0.05},
+    {key:'minimapOpacity',label:'不透明度',type:'num',min:0.2,max:1,step:0.05},
+    {key:'minimapPosition',label:'位置（topleft/topright/bottomleft/bottomright）',type:'text'},
+    {key:'minimapOffsetX',label:'X 偏移（像素）',type:'num',min:-2000,max:2000,step:5},
+    {key:'minimapOffsetY',label:'Y 偏移（像素）',type:'num',min:-2000,max:2000,step:5},
+    {key:'minimapPlayerBlipSize',label:'玩家点大小',type:'num',min:1,max:10,step:0.5},
+    {key:'minimapDotScale',label:'点位整体缩放',type:'num',min:0.3,max:3,step:0.1},
   ]},
-  {section:'Entity Dots — Show/Hide',items:[
-    {key:'minimapShowMonsters',label:'Show Monsters',type:'bool'},
-    {key:'minimapShowBosses',label:'Show Bosses (large dot)',type:'bool'},
-    {key:'minimapShowNpcs',label:'Show NPCs',type:'bool'},
-    {key:'minimapShowChests',label:'Show Chests',type:'bool'},
-    {key:'minimapShowTransitions',label:'Show Transitions',type:'bool'},
-    {key:'minimapShowTerrain',label:'Show Terrain',type:'bool'},
-    {key:'minimapShowPath',label:'Show Path Line',type:'bool'},
+  {section:'实体点位显示',items:[
+    {key:'minimapShowMonsters',label:'显示怪物',type:'bool'},
+    {key:'minimapShowBosses',label:'显示首领（大点）',type:'bool'},
+    {key:'minimapShowNpcs',label:'显示 NPC',type:'bool'},
+    {key:'minimapShowChests',label:'显示宝箱',type:'bool'},
+    {key:'minimapShowTransitions',label:'显示出口',type:'bool'},
+    {key:'minimapShowTerrain',label:'显示地形',type:'bool'},
+    {key:'minimapShowPath',label:'显示路线',type:'bool'},
   ]},
-  {section:'Labels — Show/Hide',items:[
-    {key:'minimapLabelBoss',label:'Label: Bosses',type:'bool'},
-    {key:'minimapLabelUnique',label:'Label: Unique Monsters',type:'bool'},
-    {key:'minimapLabelTransition',label:'Label: Transitions / Exits',type:'bool'},
-    {key:'minimapLabelNpc',label:'Label: POI NPCs',type:'bool'},
-    {key:'minimapLabelWatched',label:'Label: Watched Entities',type:'bool'},
-    {key:'minimapLabelFontSize',label:'Label Font Size',type:'num',min:6,max:36,step:1},
+  {section:'标签显示',items:[
+    {key:'minimapLabelBoss',label:'标注首领',type:'bool'},
+    {key:'minimapLabelUnique',label:'标注传奇怪',type:'bool'},
+    {key:'minimapLabelTransition',label:'标注出口',type:'bool'},
+    {key:'minimapLabelNpc',label:'标注 POI/NPC',type:'bool'},
+    {key:'minimapLabelWatched',label:'标注关注实体',type:'bool'},
+    {key:'minimapLabelFontSize',label:'标签字体大小',type:'num',min:6,max:36,step:1},
   ]},
 ];
 async function loadMinimapSettings(){
@@ -896,7 +913,7 @@ async function refreshHidden(){
       <span style="font-family:monospace;font-size:13px;color:#fa0;flex:1">${p}</span>
       <button class="btn btn-rm" onclick="removeHidden('${esc(p)}')">X</button>
     </div>`
-  ).join('')||'<div style="color:#666;padding:8px">No hidden patterns. Everything is visible on the radar.</div>';
+  ).join('')||'<div style="color:#666;padding:8px">还没有隐藏规则，雷达会显示所有内容。</div>';
 }
 async function addHidden(){
   const p=$('hiddenAddPattern').value.trim();
@@ -912,13 +929,13 @@ async function removeHidden(pattern){
 function hideFromEntity(meta){
   const parts=meta.split('/');
   const short=parts[parts.length-1].replace(/@\d+$/,'');
-  const pattern=prompt('Hide pattern (entities matching this will be hidden from the radar):',short);
+  const pattern=prompt('隐藏匹配规则（匹配的实体会从雷达中隐藏）：',short);
   if(pattern===null||!pattern.trim())return;
   fetch('/api/hidden',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pattern:pattern.trim()})})
     .then(()=>{refresh();});
 }
 function hideFromLandmark(name,path){
-  const pattern=prompt('Hide pattern (landmarks matching this will be hidden from the radar):',name);
+  const pattern=prompt('隐藏匹配规则（匹配的地标会从雷达中隐藏）：',name);
   if(pattern===null||!pattern.trim())return;
   fetch('/api/hidden',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pattern:pattern.trim()})})
     .then(()=>{refreshLandmarks();});
@@ -940,10 +957,10 @@ async function loadInspectorEntities(){
     const data=await(await fetch('/entities?limit=999')).json();
     inspEntities=data;
     const sel=$('inspEntity');
-    sel.innerHTML='<option value="">-- Select entity --</option>'+
-      data.map(e=>`<option value="${e.addr}">[${e.category}] ${e.name||e.metadata.split('/').pop()} (${e.addr})${e.boss?' ★':''}${e.locked?' 🔒':''}</option>`).join('');
-    $('inspStatus').textContent=`${data.length} entities`;
-  }catch(ex){$('inspStatus').textContent='Error: '+ex.message}
+    sel.innerHTML='<option value="">-- 选择实体 --</option>'+
+      data.map(e=>`<option value="${e.addr}">[${catLabel(e.category)}] ${e.name||e.metadata.split('/').pop()} (${e.addr})${e.boss?' ★':''}${e.locked?' 🔒':''}</option>`).join('');
+    $('inspStatus').textContent=`${data.length} 个实体`;
+  }catch(ex){$('inspStatus').textContent='错误：'+ex.message}
 }
 let inspSchema={};
 async function loadInspectorSchema(){
@@ -968,26 +985,26 @@ async function inspectEntity(){
     const comps=Object.keys(data.components||{});
     const compCount=comps.length;
     const fieldCount=comps.reduce((s,c)=>s+Object.keys(data.components[c]||{}).length,0);
-    $('inspComponents').innerHTML=`<span style="color:#888;font-size:11px">${compCount} components, ${fieldCount} fields</span> `+
+    $('inspComponents').innerHTML=`<span style="color:#888;font-size:11px">${compCount} 个组件，${fieldCount} 个字段</span> `+
       comps.map(c=>`<span style="background:#333;padding:2px 8px;border-radius:4px;cursor:pointer;font-size:11px" onclick="scrollToComp('${c}')">${c}</span>`).join('');
     let html='';
     for(const[name,fields]of Object.entries(data.components||{})){
       const fc=Object.keys(fields||{}).length;
-      html+=`<h3 id="insp-${name}" style="margin:12px 0 4px;color:#0af">${name} <span style="color:#666;font-size:11px">(${fc} fields)</span></h3>`;
+      html+=`<h3 id="insp-${name}" style="margin:12px 0 4px;color:#0af">${name} <span style="color:#666;font-size:11px">(${fc} 个字段)</span></h3>`;
       const schema=inspSchema[name]||{};
-      html+='<table style="width:100%"><thead><tr><th style="text-align:left">Field</th><th>Offset</th><th>Type</th><th>Value</th></tr></thead><tbody>';
+      html+='<table style="width:100%"><thead><tr><th style="text-align:left">字段</th><th>偏移</th><th>类型</th><th>值</th></tr></thead><tbody>';
       for(const[fn,fv]of Object.entries(fields||{})){
         const s=schema[fn]||{};
         const nonZero=fv!==null&&fv!==0&&fv!==false;
         const style=nonZero?'color:#eee':'color:#555';
         const val=fv===null?'<span style="color:#444">null</span>':typeof fv==='object'?`<span style="color:#8af">${JSON.stringify(fv)}</span>`:`<b style="${style}">${fv}</b>`;
-        const verified=s.verified?'<span style="color:#4f4" title="Verified">&#10003;</span>':'';
+        const verified=s.verified?'<span style="color:#4f4" title="已验证">&#10003;</span>':'';
         const notes=s.notes?` <span style="color:#666;font-size:10px" title="${s.notes}">[?]</span>`:'';
         html+=`<tr><td style="color:#aaa">${fn}${verified}${notes}</td><td style="color:#666;font-size:10px">${s.offset||''}</td><td style="color:#666;font-size:10px">${s.type||''}</td><td>${val}</td></tr>`;
       }
       html+='</tbody></table>';
     }
-    $('inspResults').innerHTML=html||'<p style="color:#888">No components resolved (entity may be out of range)</p>';
+    $('inspResults').innerHTML=html||'<p style="color:#888">没有解析到组件（实体可能已离开范围）</p>';
   }catch(ex){$('inspResults').innerHTML=`<p style="color:#f66">${ex.message}</p>`}
 }
 function scrollToComp(name){const el=document.getElementById('insp-'+name);if(el)el.scrollIntoView({behavior:'smooth'})}
@@ -998,17 +1015,17 @@ function inspAutoTick(){
 
 // ── KEYBINDS ──
 const keybindsDef=[
-  {key:'keyCheat1',label:'Cheat: No Atlas Fog',def:0x70},
-  {key:'keyCheat2',label:'Cheat: Reveal Map',def:0x71},
-  {key:'keyCheat3',label:'Cheat: Infinite Zoom',def:0x72},
-  {key:'keyCheat4',label:'Cheat: Enemy HP Bars',def:0x73},
-  {key:'keyCheat5',label:'Cheat: Light Radius',def:0x74},
-  {key:'keyCycleLandmarks',label:'Cycle Landmarks (path-to)',def:0x75},
-  {key:'keyCycleEntities',label:'Cycle Entities (path-to)',def:0x76},
-  {key:'keyAutoFlask',label:'Toggle Auto-Flask',def:0x77},
-  {key:'keySettings',label:'Open Settings Panel',def:0x78},
-  {key:'keyToggleOverlay',label:'Toggle Overlay Visibility',def:0x79},
-  {key:'keyDashboard',label:'Open Dashboard',def:0x7A},
+  {key:'keyCheat1',label:'补丁：Atlas 去雾',def:0x70},
+  {key:'keyCheat2',label:'补丁：揭示地图',def:0x71},
+  {key:'keyCheat3',label:'补丁：无限缩放',def:0x72},
+  {key:'keyCheat4',label:'补丁：敌人血条',def:0x73},
+  {key:'keyCheat5',label:'补丁：玩家光照',def:0x74},
+  {key:'keyCycleLandmarks',label:'切换地标导航目标',def:0x75},
+  {key:'keyCycleEntities',label:'切换实体导航目标',def:0x76},
+  {key:'keyAutoFlask',label:'开关自动药剂',def:0x77},
+  {key:'keySettings',label:'打开设置面板',def:0x78},
+  {key:'keyToggleOverlay',label:'显示/隐藏悬浮层',def:0x79},
+  {key:'keyDashboard',label:'打开网页控制台',def:0x7A},
 ];
 const VK_DISPLAY={0x70:'F1',0x71:'F2',0x72:'F3',0x73:'F4',0x74:'F5',0x75:'F6',0x76:'F7',0x77:'F8',0x78:'F9',0x79:'F10',0x7A:'F11',0x7B:'F12',
   0x31:'1',0x32:'2',0x33:'3',0x34:'4',0x35:'5',0x36:'6',0x37:'7',0x38:'8',0x39:'9',0x30:'0',
@@ -1034,11 +1051,11 @@ function loadKeybinds(){
       <label>${kb.label}</label>
       <input type="text" readonly value="${vkDisplay(vk)}" id="kb_${kb.key}"
         style="width:80px;text-align:center;cursor:pointer;background:#1e1e28;border:1px solid ${dup?'#f55':'#555'};color:#78b4ff;font-weight:bold"
-        onfocus="this.value='... press key ...';this.style.borderColor='#78b4ff'"
+        onfocus="this.value='... 按下新按键 ...';this.style.borderColor='#78b4ff'"
         onkeydown="captureKey(event,'${kb.key}');return false"
         onblur="this.value=vkDisplay(settings['${kb.key}']??${kb.def});this.style.borderColor='#555'">
       <span style="color:#666;font-size:11px;margin-left:8px">VK: 0x${vk.toString(16).toUpperCase()}</span>
-      ${dup?'<span style="color:#f55;font-size:11px;margin-left:4px">duplicate!</span>':''}
+      ${dup?'<span style="color:#f55;font-size:11px;margin-left:4px">重复！</span>':''}
     </div>`;
   }
   $('keybindsBody').innerHTML=html;

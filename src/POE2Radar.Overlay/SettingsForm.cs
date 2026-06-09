@@ -17,7 +17,7 @@ public sealed class SettingsForm : Form
 
     private void BuildUI()
     {
-        Text = "Settings (F9)";
+        Text = "设置 (F9)";
         FormBorderStyle = FormBorderStyle.FixedToolWindow;
         TopMost = true; StartPosition = FormStartPosition.Manual;
         Location = new Point(50, 50);
@@ -31,7 +31,7 @@ public sealed class SettingsForm : Form
 
         panel.Controls.Add(new Label
         {
-            Text = "Cheats (F11 for full radar settings)",
+            Text = "游戏补丁 (F11 打开完整雷达设置)",
             Location = new Point(10, y), AutoSize = true,
             ForeColor = Color.FromArgb(120, 180, 255),
             Font = new Font("Segoe UI", 10f, System.Drawing.FontStyle.Bold),
@@ -43,7 +43,7 @@ public sealed class SettingsForm : Form
             var capName = name;
             var cb = new CheckBox
             {
-                Text = info.ShortName + (info.Found ? "" : " (n/a)"),
+                Text = info.ShortName + (info.Found ? "" : "（不可用）"),
                 Location = new Point(14, y + 2), AutoSize = true,
                 Checked = info.Active, Enabled = info.Found,
                 ForeColor = info.Found ? Color.White : Color.Gray,
