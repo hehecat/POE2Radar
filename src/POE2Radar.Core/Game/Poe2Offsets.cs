@@ -353,12 +353,42 @@ public static class Poe2
     public static class UiElement
     {
         public const int Self           = 0x08;  // ✓ self pointer
-        public const int Children       = 0x10;  // ✓ StdVector of child UiElement pointers
+        public const int Children       = 0x10;  // ✓ StdVector begin of child UiElement pointers
+        public const int ChildrenEnd    = 0x18;  // ✓ StdVector end
+        public const int Parent         = 0xB8;  // (community) parent UiElement; true UI root = *(UiRoot+0xB8)
+        public const int RelativePos    = 0x118; // ✓ StdTuple2D<float> position relative to parent
         public const int Flags          = 0x180; // ✓ uint; IsVisibleLocal = bit 0x0B (toggle-diff: 0x2EF1↔0x26F1)
         public const int FlagVisibleBit = 0x0B;  // ✓ visible bit (set when shown)
+        public const int SizeW          = 0x288; // ✓ float unscaled width
+        public const int SizeH          = 0x28C; // ✓ float unscaled height
         // Full visibility is hierarchical: an element is shown iff its own bit 0x0B AND every
-        // ancestor's bit are set. Walk Parent up to UiRoot (Parent offset still TBD).
-        // TODO: Position/Size offsets needed for pixel-perfect minimap overlay alignment.
-        // Need to probe a known UiElement with CE to find screen rect floats.
+        // ancestor's bit are set. Walk Parent (+0xB8) up to the root.
+    }
+
+    /// <summary>Atlas map-node UiElement fields from Sikaka/POE2Radar v0.7.3.</summary>
+    public static class AtlasNode
+    {
+        public const int MapNodeId   = 0x300;
+        public const int Content     = 0x310;
+        public const int State       = 0x32C;
+        public const int Biome       = 0x32E;
+        public const int Flags       = 0x32F;
+        public const int Completion  = 0x339;
+        public const int ContentVec  = 0x350;
+    }
+
+    /// <summary>Atlas screen panel under UiRoot. Used as a cheap atlas-open gate.</summary>
+    public static class AtlasPanel
+    {
+        public const int UiRootChildIndex = 22;
+        public const int ExpectedChildCount = 18;
+    }
+
+    /// <summary>World hover tracker offsets from Sikaka/POE2Radar v0.7.3.</summary>
+    public static class HoverTracker
+    {
+        public const int FromUiRoot = 0x7D8;
+        public const int WorldTracker = 0x630;
+        public const int HoveredEntity = 0x18;
     }
 }

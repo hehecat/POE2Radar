@@ -108,4 +108,4 @@ public sealed class WatchedEntities
     }
 }
 
-public sealed record WatchedEntry(string Pattern, string Label, string Color, bool Enabled, float Size = 7f);
+public sealed record WatchedEntry(string Pattern, string Label, string Color, bool Enabled, float Size = 7f, string Shape = "Circle");

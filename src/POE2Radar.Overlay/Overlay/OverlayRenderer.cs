@@ -139,13 +139,21 @@ public sealed class OverlayRenderer : IDisposable
             else
             {
                 DrawStatus(rt, ctx);
-                if (ctx.InGame && ctx.Radar?.ShowNameplates != false) DrawNameplates(rt, ctx);
-                if (ctx is { InGame: true, Map.IsVisible: true })
-                    DrawMap(rt, ctx);
-                if (ctx.InGame && ctx.Radar?.ShowMinimap == true && !ctx.Map.IsVisible)
-                    DrawMinimap(rt, ctx);
-                if (ctx.InGame && !ctx.Map.IsVisible && ctx.PathPoints is { Count: >= 2 } && ctx.Radar?.ShowPath != false && ctx.Radar?.ShowGroundWaypoints != false)
-                    DrawGroundWaypoints(rt, ctx);
+                if (ctx.InGame && ctx.AtlasOpen)
+                {
+                    DrawAtlas(rt, ctx);
+                    DrawAtlasInspect(rt, ctx);
+                }
+                else
+                {
+                    if (ctx.InGame && ctx.Radar?.ShowNameplates != false) DrawNameplates(rt, ctx);
+                    if (ctx is { InGame: true, Map.IsVisible: true })
+                        DrawMap(rt, ctx);
+                    if (ctx.InGame && ctx.Radar?.ShowMinimap == true && !ctx.Map.IsVisible)
+                        DrawMinimap(rt, ctx);
+                    if (ctx.InGame && !ctx.Map.IsVisible && ctx.PathPoints is { Count: >= 2 } && ctx.Radar?.ShowPath != false && ctx.Radar?.ShowGroundWaypoints != false)
+                        DrawGroundWaypoints(rt, ctx);
+                }
                 if (ctx.InspectedMeta != null)
                     DrawInspector(rt, ctx);
                 if (ctx.ShowZoneGuide && ctx.ZoneGuideTitle != null)
@@ -297,6 +305,121 @@ public sealed class OverlayRenderer : IDisposable
                     poiY += poiFs + 3;
                 }
             }
+        }
+    }
+
+    private void DrawAtlas(ID2D1RenderTarget rt, RenderContext ctx)
+    {
+        if (ctx.AtlasNodes is not { Count: > 0 } marks) return;
+
+        float wScreen = ctx.WindowWidth, hScreen = ctx.WindowHeight;
+        float h0 = ctx.AtlasScale, h1 = ctx.AtlasShearX, h2 = ctx.AtlasOffX;
+        float h3 = ctx.AtlasShearY, h4 = ctx.AtlasScaleY, h5 = ctx.AtlasOffY;
+        float h6 = ctx.AtlasPersX, h7 = ctx.AtlasPersY;
+        float cx = wScreen * 0.5f, cy = hScreen * 0.5f;
+
+        foreach (var n in marks)
+        {
+            var denom = h6 * n.X + h7 * n.Y + 1f;
+            if (MathF.Abs(denom) < 1e-6f) continue;
+
+            var sx = (h0 * n.X + h1 * n.Y + h2) / denom;
+            var sy = (h3 * n.X + h4 * n.Y + h5) / denom;
+            var onScreen = sx >= 0 && sx <= wScreen && sy >= 0 && sy <= hScreen;
+            var color = string.IsNullOrEmpty(n.Color)
+                ? new Color4(0.235f, 0.86f, 1f, 1f)
+                : ParseColor(n.Color, 1f);
+
+            if (!onScreen)
+            {
+                if (n.Arrow) DrawAtlasArrow(rt, sx, sy, cx, cy, wScreen, hScreen, color, n.Label);
+                continue;
+            }
+
+            var p = new NumVec2(sx, sy);
+            _bStyle!.Color = color;
+            if (n.Selected || n.Arrow)
+            {
+                rt.DrawEllipse(new Ellipse(p, 18f, 18f), _bStyle, 3f);
+                rt.DrawEllipse(new Ellipse(p, 9f, 9f), _bStyle, 2f);
+            }
+            else if (n.IconType > 0)
+            {
+                _bStyle.Color = new Color4(1f, 0.9f, 0.2f, 0.9f);
+                rt.DrawEllipse(new Ellipse(p, 7f, 7f), _bStyle, 2f);
+            }
+            else
+            {
+                _bStyle.Color = n.HasContent
+                    ? new Color4(1f, 0.62f, 0.26f, 0.95f)
+                    : new Color4(0.43f, 0.91f, 0.53f, 0.85f);
+                rt.DrawEllipse(new Ellipse(p, n.Visited ? 16f : 11f, n.Visited ? 16f : 11f), _bStyle, n.Visited ? 3f : 2f);
+            }
+
+            var label = n.Label ?? (n.IconType > 0 ? n.IconType.ToString() : null);
+            if (label != null)
+                rt.DrawText(label, _tf!, new Rect(sx + 11f, sy - 9f, sx + 220f, sy + 11f), _bText!, DrawTextOptions.Clip);
+        }
+    }
+
+    private void DrawAtlasInspect(ID2D1RenderTarget rt, RenderContext ctx)
+    {
+        if (ctx.AtlasInspect is not { Lines.Count: > 0 } ins) return;
+
+        float h0 = ctx.AtlasScale, h1 = ctx.AtlasShearX, h2 = ctx.AtlasOffX;
+        float h3 = ctx.AtlasShearY, h4 = ctx.AtlasScaleY, h5 = ctx.AtlasOffY;
+        float h6 = ctx.AtlasPersX, h7 = ctx.AtlasPersY;
+        var denom = h6 * ins.X + h7 * ins.Y + 1f;
+        if (MathF.Abs(denom) < 1e-6f) return;
+
+        var sx = (h0 * ins.X + h1 * ins.Y + h2) / denom;
+        var sy = (h3 * ins.X + h4 * ins.Y + h5) / denom;
+        var cyan = new Color4(0.235f, 0.86f, 1f, 1f);
+        _bStyle!.Color = cyan;
+        rt.DrawEllipse(new Ellipse(new NumVec2(sx, sy), 13f, 13f), _bStyle, 2.5f);
+
+        const float lineHeight = 16f, padX = 9f, padY = 7f, boxW = 250f;
+        var boxH = padY * 2f + lineHeight * ins.Lines.Count;
+        var bx = Math.Clamp(sx + 16f, 0f, MathF.Max(0f, ctx.WindowWidth - boxW));
+        var by = Math.Clamp(sy + 14f, 0f, MathF.Max(0f, ctx.WindowHeight - boxH));
+        var box = new Vortice.RawRectF(bx, by, bx + boxW, by + boxH);
+        rt.FillRectangle(box, _bPanel!);
+        rt.DrawRectangle(box, _bStyle, 1.5f);
+        for (var i = 0; i < ins.Lines.Count; i++)
+            rt.DrawText(ins.Lines[i], _tf!, new Rect(bx + padX, by + padY + i * lineHeight, bx + boxW - 4f, by + padY + (i + 1) * lineHeight + 2f), _bText!, DrawTextOptions.Clip);
+    }
+
+    private void DrawAtlasArrow(ID2D1RenderTarget rt, float sx, float sy, float cx, float cy, float wScreen, float hScreen, Color4 color, string? label)
+    {
+        var dx = sx - cx;
+        var dy = sy - cy;
+        var len = MathF.Sqrt(dx * dx + dy * dy);
+        if (len < 1f) return;
+
+        var ux = dx / len;
+        var uy = dy / len;
+        const float margin = 46f;
+        var tX = MathF.Abs(ux) > 1e-4f ? (wScreen * 0.5f - margin) / MathF.Abs(ux) : 1e9f;
+        var tY = MathF.Abs(uy) > 1e-4f ? (hScreen * 0.5f - margin) / MathF.Abs(uy) : 1e9f;
+        var t = MathF.Min(tX, tY);
+        var ex = cx + ux * t;
+        var ey = cy + uy * t;
+        var px = -uy;
+        var py = ux;
+
+        var tip = new NumVec2(ex + ux * 11f, ey + uy * 11f);
+        var bl = new NumVec2(ex - ux * 9f + px * 10f, ey - uy * 9f + py * 10f);
+        var br = new NumVec2(ex - ux * 9f - px * 10f, ey - uy * 9f - py * 10f);
+        _bStyle!.Color = color;
+        rt.DrawLine(tip, bl, _bStyle, 4f);
+        rt.DrawLine(tip, br, _bStyle, 4f);
+        rt.DrawLine(bl, br, _bStyle, 4f);
+
+        if (label != null)
+        {
+            var lx = ex - ux * 56f;
+            var ly = ey - uy * 18f;
+            rt.DrawText(label, _tf!, new Rect(lx - 95f, ly - 8f, lx + 95f, ly + 10f), _bText!, DrawTextOptions.Clip);
         }
     }
 
@@ -1122,6 +1245,18 @@ public sealed class OverlayRenderer : IDisposable
         rt.DrawRoundedRectangle(
             new RoundedRectangle(new Vortice.RawRectF(mx - 2, my - 2, mx + sz + 2, my + sz + 2), 6, 6),
             _bText!, 1f);
+    }
+
+    private static Color4 ParseColor(string hex, float opacity)
+    {
+        var a = Math.Clamp(opacity, 0f, 1f);
+        hex = hex.TrimStart('#');
+        if (hex.Length >= 6
+            && byte.TryParse(hex.AsSpan(0, 2), System.Globalization.NumberStyles.HexNumber, null, out var r)
+            && byte.TryParse(hex.AsSpan(2, 2), System.Globalization.NumberStyles.HexNumber, null, out var g)
+            && byte.TryParse(hex.AsSpan(4, 2), System.Globalization.NumberStyles.HexNumber, null, out var b))
+            return new Color4(r / 255f, g / 255f, b / 255f, a);
+        return new Color4(1f, 1f, 1f, a);
     }
 
     private static void ParseHex(string hex, out byte r, out byte g, out byte b)

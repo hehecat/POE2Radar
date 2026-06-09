@@ -101,7 +101,15 @@ public sealed class RadarSettings
     // Minimap — dot sizes
     public float MinimapDotScale { get; set; } = 1f;
 
+    // Atlas overlay
+    public bool AtlasOverlayEnabled { get; set; } = true;
+    public bool AtlasDrawAll { get; set; } = false;
+    public List<string> AtlasHighlightTags { get; set; } = new();
+    public List<string> AtlasArrowTags { get; set; } = new();
+    public Dictionary<string, string> AtlasHighlightColors { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
     // Zone Guide
+    public bool ShowZoneGuide { get; set; } = false;
     public float ZoneGuideTitleFontSize { get; set; } = 22f;
     public float ZoneGuideBodyFontSize { get; set; } = 16f;
 
@@ -328,6 +336,7 @@ public sealed class MechanicStyle
 {
     public bool Enabled { get; set; } = true;
     public string Name { get; set; } = "";
+    public List<string> Categories { get; set; } = new();
     public List<string> Match { get; set; } = new();
     public string Shape { get; set; } = "Star";
     public string Color { get; set; } = "#FFFFFF";

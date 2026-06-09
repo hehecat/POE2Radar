@@ -22,10 +22,12 @@ public sealed class RadarApp : IDisposable
     private readonly ProcessHandle _process;
     private readonly MemoryReader _reader;
     private readonly Poe2Live _live;
+    private readonly Poe2Atlas _atlas;
     private readonly CheatManager _cheats;
     private readonly OverlayWindow _window;
     private readonly OverlayRenderer _renderer;
     private readonly WatchedEntities _watched;
+    private readonly HiddenEntities _hidden;
     private readonly PathingTargets _pathing;
     private readonly AutoRuleEngine _autoRules;
     private readonly ApiServer _api;
@@ -67,6 +69,9 @@ public sealed class RadarApp : IDisposable
     private int _charLevel;
     private float[]? _cameraMatrix;
     private bool _overlayVisible = true;
+    private bool _atlasOpen;
+    private float _atlasZoom = 0.85f;
+    private List<AtlasMark> _atlasMarks = new();
 
     private DateTime _nextCheatKeyAt = DateTime.MinValue;
     private static readonly (int Vk, string Name)[] CheatKeys =
@@ -85,6 +90,7 @@ public sealed class RadarApp : IDisposable
         _process = process;
         _reader = reader;
         _live = new Poe2Live(reader, gameStateSlot);
+        _atlas = new Poe2Atlas(reader);
         _cheats = new CheatManager(process, reader);
         Console.WriteLine("\nScanning cheat patterns...");
         _cheats.ScanAndResolve();
@@ -94,9 +100,10 @@ public sealed class RadarApp : IDisposable
         var configDir = Path.Combine(Path.GetDirectoryName(Environment.ProcessPath) ?? ".", "config");
         _radarSettings = RadarSettings.Load(Path.Combine(configDir, "radar_settings.json"));
         _watched = new WatchedEntities(Path.Combine(configDir, "watched_entities.json"));
+        _hidden = new HiddenEntities(Path.Combine(configDir, "hidden_entities.json"));
         _pathing = new PathingTargets(Path.Combine(configDir, "pathing_targets.json"));
         _autoRules = new AutoRuleEngine(Path.Combine(configDir, "auto_rules.json"));
-        _api = new ApiServer(() => _state, _watched, _radarSettings, _pathing, _autoRules);
+        _api = new ApiServer(() => _state, _watched, _radarSettings, _pathing, _autoRules, _hidden);
         try { _api.Start(); Console.WriteLine("API on http://localhost:7777 (/state, /entities)"); }
         catch (Exception ex) { Console.Error.WriteLine($"API server disabled: {ex.Message}"); }
     }
@@ -150,12 +157,22 @@ public sealed class RadarApp : IDisposable
                 _terrain ??= _live.Terrain(areaInstance);
                 _entities = _live.Entities(areaInstance);
                 _landmarks = _live.Landmarks(areaInstance);
+                BuildAtlasMarks(inGameState);
                 UpdatePath(player);
             }
+        }
+        else
+        {
+            _atlasOpen = false;
+            _atlasMarks.Clear();
         }
 
         _state = new RadarState(inGame, _areaHash, areaLevel, map.IsVisible, map.Zoom, player, _entities, _landmarks,
             _hpPct, _manaPct, _autoFlask, _flaskNote, _areaCode, _charName, _charLevel);
+
+        var zone = ZoneGuide.Shared.Area(_areaCode);
+        var guide = ZoneGuide.Shared.Notes(_areaCode);
+        var pathTargetName = ResolvePathTargetName();
 
         var ctx = new RenderContext(
             InGame: inGame,
@@ -186,8 +203,82 @@ public sealed class RadarApp : IDisposable
             LandmarkScreenPositions: _landmarkScreenPos,
             Exploration: _exploration,
             InspectedName: _inspectedEntity,
-            InspectedMeta: _inspectedMeta);
+            InspectedMeta: _inspectedMeta,
+            CharName: _charName,
+            AreaName: zone?.Name,
+            AreaAct: zone?.Act ?? 0,
+            IsTown: zone?.Town ?? false,
+            GameMinimap: _live.GameMinimap,
+            Hidden: _hidden,
+            EntityNames: EntityNameResolver.Shared,
+            GameData: GameDataIndex.Shared,
+            ShowZoneGuide: _radarSettings.ShowZoneGuide,
+            ZoneGuideTitle: guide?.Title,
+            ZoneGuideNotes: guide?.Notes,
+            PathTargetName: pathTargetName,
+            AtlasOpen: _atlasOpen,
+            AtlasNodes: _atlasMarks,
+            AtlasScale: AtlasProjectionScale(),
+            AtlasScaleY: AtlasProjectionScale());
         _renderer.Render(ctx);
+    }
+
+    private string? ResolvePathTargetName()
+    {
+        if (_manualPathGridTarget is { } p) return $"Grid ({p.X}, {p.Y})";
+        if (string.IsNullOrWhiteSpace(_manualPathPattern)) return null;
+        return _pathing.All.FirstOrDefault(e =>
+            e.Pattern.Equals(_manualPathPattern, StringComparison.OrdinalIgnoreCase))?.Label ?? _manualPathPattern;
+    }
+
+    private float AtlasProjectionScale()
+    {
+        var uiScale = _window.Height > 0 ? _window.Height / 1600f : 1080f / 1600f;
+        return uiScale * (_atlasZoom > 0.01f ? _atlasZoom : 0.85f);
+    }
+
+    private void BuildAtlasMarks(nint inGameState)
+    {
+        if (!_radarSettings.AtlasOverlayEnabled)
+        {
+            _atlasOpen = false;
+            _atlasMarks.Clear();
+            return;
+        }
+
+        var nodes = _atlas.ReadNodes(inGameState);
+        _atlasOpen = nodes.Count > 0;
+        if (!_atlasOpen)
+        {
+            _atlasMarks.Clear();
+            return;
+        }
+
+        var zoomNode = nodes.FirstOrDefault(n => n.Scale > 0.01f);
+        if (zoomNode.Scale > 0.01f) _atlasZoom = zoomNode.Scale;
+
+        var trackTags = new HashSet<string>(_radarSettings.AtlasHighlightTags ?? new(), StringComparer.OrdinalIgnoreCase);
+        var arrowTags = new HashSet<string>(_radarSettings.AtlasArrowTags ?? new(), StringComparer.OrdinalIgnoreCase);
+        var marks = new List<AtlasMark>(nodes.Count);
+
+        foreach (var n in nodes)
+        {
+            if (!n.Visible) continue;
+            var matched = n.Tags.FirstOrDefault(t => trackTags.Contains(t) || arrowTags.Contains(t));
+            var tracked = matched != null && trackTags.Contains(matched);
+            var arrow = matched != null && arrowTags.Contains(matched);
+            if (!_radarSettings.AtlasDrawAll && !tracked && !arrow && !n.HasContent && n.IconType <= 0) continue;
+
+            string? color = null;
+            if (matched != null && _radarSettings.AtlasHighlightColors.TryGetValue(matched, out var configured))
+                color = configured;
+
+            var label = matched ?? (n.HasContent ? string.Join(", ", n.Tags.Take(2)) : null);
+            if (string.IsNullOrWhiteSpace(label)) label = n.MapName;
+            marks.Add(new AtlasMark(n.X, n.Y, tracked, n.HasContent, n.Visited, n.Unlocked, n.Biome, n.IconType, label, color, arrow));
+        }
+
+        _atlasMarks = marks;
     }
 
     private void HandleSettingsToggle()

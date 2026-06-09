@@ -14,6 +14,7 @@ public sealed class ApiServer : IDisposable
     private readonly WatchedEntities _watched;
     private readonly PathingTargets _pathing;
     private readonly AutoRuleEngine _autoRules;
+    private readonly HiddenEntities? _hidden;
     private readonly RadarSettings _settings;
     private volatile bool _running;
 
@@ -21,12 +22,13 @@ public sealed class ApiServer : IDisposable
 
     public WatchedEntities Watched => _watched;
 
-    public ApiServer(Func<RadarState> state, WatchedEntities watched, RadarSettings settings, PathingTargets pathing, AutoRuleEngine autoRules, int port = 7777)
+    public ApiServer(Func<RadarState> state, WatchedEntities watched, RadarSettings settings, PathingTargets pathing, AutoRuleEngine autoRules, HiddenEntities? hidden = null, int port = 7777)
     {
         _state = state;
         _watched = watched;
         _pathing = pathing;
         _autoRules = autoRules;
+        _hidden = hidden;
         _settings = settings;
         _listener.Prefixes.Add($"http://localhost:{port}/");
     }
@@ -169,6 +171,44 @@ public sealed class ApiServer : IDisposable
                     var patch = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(body);
                     if (patch != null) ApplySettings(patch);
                     WriteJson(ctx, _settings);
+                }
+                break;
+            }
+
+            case "/api/hidden":
+            {
+                if (_hidden == null)
+                {
+                    if (method == "GET") WriteJson(ctx, Array.Empty<string>());
+                    else WriteJson(ctx, new { error = "hidden store disabled" }, 503);
+                    break;
+                }
+
+                if (method == "GET")
+                {
+                    WriteJson(ctx, _hidden.All);
+                }
+                else if (method == "POST")
+                {
+                    var body = ReadBody(ctx);
+                    using var doc = JsonDocument.Parse(body);
+                    var pattern = doc.RootElement.TryGetProperty("pattern", out var p) ? p.GetString() : null;
+                    if (!string.IsNullOrWhiteSpace(pattern))
+                    {
+                        _hidden.Add(pattern);
+                        WriteJson(ctx, new { ok = true });
+                    }
+                    else WriteJson(ctx, new { error = "missing pattern" }, 400);
+                }
+                else if (method == "DELETE")
+                {
+                    var pattern = q["pattern"];
+                    if (!string.IsNullOrWhiteSpace(pattern))
+                    {
+                        _hidden.Remove(pattern);
+                        WriteJson(ctx, new { ok = true });
+                    }
+                    else WriteJson(ctx, new { error = "missing pattern" }, 400);
                 }
                 break;
             }
