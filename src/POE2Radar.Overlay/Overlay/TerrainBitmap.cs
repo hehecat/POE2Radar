@@ -35,7 +35,20 @@ public sealed class TerrainBitmap : IDisposable
     /// <paramref name="areaHash"/> match the cached bitmap. <paramref name="inTransition"/> forces
     /// an immediate drop (the area's hash may briefly persist while a zone is loading).
     /// </summary>
-    public void EnsureBuiltRaw(byte[] walkable, int width, int height, uint areaHash, bool inTransition)
+    public void EnsureBuiltRaw(
+        byte[] walkable,
+        int width,
+        int height,
+        uint areaHash,
+        bool inTransition,
+        byte edgeR = 60,
+        byte edgeG = 220,
+        byte edgeB = 255,
+        byte edgeAlpha = 180,
+        byte interiorR = 80,
+        byte interiorG = 100,
+        byte interiorB = 130,
+        byte interiorAlpha = 30)
     {
         if (_bitmap is not null && (inTransition || areaHash != _builtForAreaHash))
         {
@@ -43,10 +56,22 @@ public sealed class TerrainBitmap : IDisposable
         }
         if (inTransition || width <= 0 || height <= 0) return;
         if (_bitmap is not null && width == _builtForWidth && height == _builtForHeight && areaHash == _builtForAreaHash) return;
-        BuildFrom(walkable, width, height, areaHash);
+        BuildFrom(walkable, width, height, areaHash, edgeR, edgeG, edgeB, edgeAlpha, interiorR, interiorG, interiorB, interiorAlpha);
     }
 
-    private void BuildFrom(byte[] walkable, int w, int h, uint areaHash)
+    private void BuildFrom(
+        byte[] walkable,
+        int w,
+        int h,
+        uint areaHash,
+        byte edgeR,
+        byte edgeG,
+        byte edgeB,
+        byte edgeAlpha,
+        byte interiorR,
+        byte interiorG,
+        byte interiorB,
+        byte interiorAlpha)
     {
         var pixels = new byte[w * h * 4]; // BGRA
 
@@ -56,9 +81,6 @@ public sealed class TerrainBitmap : IDisposable
         //   • Wall edge (walkable cell adjacent to an unwalkable cell or grid boundary) →
         //     bright cyan at moderate alpha (~180/255). Strong enough to outline rooms.
         //   • Walls themselves stay alpha 0 so PoE's actual map shows through.
-
-        const byte interiorAlpha = 30;
-        const byte edgeAlpha     = 180;
 
         for (var y = 0; y < h; y++)
         {
@@ -84,16 +106,16 @@ public sealed class TerrainBitmap : IDisposable
 
                 if (isEdge)
                 {
-                    pixels[idx + 0] = 255;        // B
-                    pixels[idx + 1] = 220;        // G
-                    pixels[idx + 2] = 60;         // R
+                    pixels[idx + 0] = edgeB;      // B
+                    pixels[idx + 1] = edgeG;      // G
+                    pixels[idx + 2] = edgeR;      // R
                     pixels[idx + 3] = edgeAlpha;
                 }
                 else
                 {
-                    pixels[idx + 0] = 130;        // B
-                    pixels[idx + 1] = 100;        // G
-                    pixels[idx + 2] = 80;         // R
+                    pixels[idx + 0] = interiorB;  // B
+                    pixels[idx + 1] = interiorG;  // G
+                    pixels[idx + 2] = interiorR;  // R
                     pixels[idx + 3] = interiorAlpha;
                 }
             }

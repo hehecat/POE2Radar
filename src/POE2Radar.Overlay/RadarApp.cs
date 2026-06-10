@@ -9,6 +9,7 @@ using POE2Radar.Overlay.Input;
 using POE2Radar.Overlay.Native;
 using POE2Radar.Overlay.Automation;
 using POE2Radar.Overlay.Web;
+using IOPath = System.IO.Path;
 
 #pragma warning disable CA1416
 
@@ -97,12 +98,12 @@ public sealed class RadarApp : IDisposable
         Console.WriteLine("热键：F1-F5 游戏补丁，F8 自动药剂，F9 设置，F10 显示/隐藏 overlay，F11 网页控制台\n");
         _window = OverlayWindow.Create();
         _renderer = new OverlayRenderer(_window);
-        var configDir = Path.Combine(Path.GetDirectoryName(Environment.ProcessPath) ?? ".", "config");
-        _radarSettings = RadarSettings.Load(Path.Combine(configDir, "radar_settings.json"));
-        _watched = new WatchedEntities(Path.Combine(configDir, "watched_entities.json"));
-        _hidden = new HiddenEntities(Path.Combine(configDir, "hidden_entities.json"));
-        _pathing = new PathingTargets(Path.Combine(configDir, "pathing_targets.json"));
-        _autoRules = new AutoRuleEngine(Path.Combine(configDir, "auto_rules.json"));
+        var configDir = IOPath.Combine(IOPath.GetDirectoryName(Environment.ProcessPath) ?? ".", "config");
+        _radarSettings = RadarSettings.Load(IOPath.Combine(configDir, "radar_settings.json"));
+        _watched = new WatchedEntities(IOPath.Combine(configDir, "watched_entities.json"));
+        _hidden = new HiddenEntities(IOPath.Combine(configDir, "hidden_entities.json"));
+        _pathing = new PathingTargets(IOPath.Combine(configDir, "pathing_targets.json"));
+        _autoRules = new AutoRuleEngine(IOPath.Combine(configDir, "auto_rules.json"));
         _api = new ApiServer(() => _state, _watched, _radarSettings, _pathing, _autoRules, _hidden);
         try { _api.Start(); Console.WriteLine("API 已启动：http://localhost:7777 (/state, /entities)"); }
         catch (Exception ex) { Console.Error.WriteLine($"API 服务已禁用：{ex.Message}"); }

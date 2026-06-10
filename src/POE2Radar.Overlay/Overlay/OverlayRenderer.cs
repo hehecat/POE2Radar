@@ -260,7 +260,7 @@ public sealed class OverlayRenderer : IDisposable
                 if (e.Category != Poe2Live.EntityCategory.Transition) continue;
                 var trName = ctx.EntityNames?.ResolveOrShorten(e.Metadata) ?? e.Metadata.Split('/')[^1];
                 var destArea = ctx.GameData?.GetArea(trName);
-                var label = destArea != null ? $"→ {destArea.Name}" : $"→ {trName}";
+                var label = destArea is { } area ? $"→ {area.Name}" : $"→ {trName}";
                 if (!lines.Any(l => l.text == label))
                     lines.Add((label, _bTrans!));
             }
@@ -695,7 +695,8 @@ public sealed class OverlayRenderer : IDisposable
             ParseHex(ts?.InteriorColor ?? "#506482", out var iR, out var iG, out var iB);
             var iA = (byte)Math.Clamp((int)((ts?.InteriorOpacity ?? ctx.Radar?.TerrainInteriorAlpha ?? 0.12f) * 255), 0, 255);
             _terrain.EnsureBuiltRaw(t.Walkable, t.Width, t.Height, ctx.AreaHash, inTransition: false,
-                edgeR: eR, edgeG: eG, edgeB: eB, edgeAlpha: eA, interiorAlpha: iA);
+                edgeR: eR, edgeG: eG, edgeB: eB, edgeAlpha: eA,
+                interiorR: iR, interiorG: iG, interiorB: iB, interiorAlpha: iA);
             if (_terrain.Bitmap is { } bmp)
             {
                 var p00 = Project(new NumVec2(0, 0), player, center, scale);
@@ -865,7 +866,7 @@ public sealed class OverlayRenderer : IDisposable
                     var trTf = GetTextFormat(trFs, ref _tfTransition, ref _lastTrFs);
                     var trName = ctx.EntityNames?.ResolveOrShorten(e.Metadata) ?? e.Metadata.Split('/')[^1];
                     var destArea = ctx.GameData?.GetArea(trName);
-                    var destLabel = destArea != null ? $"→ {destArea.Name}" : trName;
+                    var destLabel = destArea is { } area ? $"→ {area.Name}" : trName;
                     rt.DrawText(destLabel, trTf, new Rect(p.X + r + 3, p.Y - trFs / 2, p.X + 300, p.Y + trFs), _bTrans!);
                 }
             }
@@ -1198,7 +1199,7 @@ public sealed class OverlayRenderer : IDisposable
                 var mmLabelTf = GetTextFormat(mmLabelFs, ref _tfTransition, ref _lastTrFs);
                 var trLabel = ctx.EntityNames?.ResolveOrShorten(e.Metadata) ?? e.Metadata.Split('/')[^1];
                 var destArea = ctx.GameData?.GetArea(trLabel);
-                if (destArea != null) trLabel = destArea.Name;
+                if (destArea is { } area) trLabel = area.Name;
                 rt.DrawText(trLabel, mmLabelTf, new Rect(p.X + r + 2, p.Y - mmLabelFs / 2, p.X + 120, p.Y + mmLabelFs), _bTrans!);
             }
             else if (e.Category == Poe2Live.EntityCategory.Npc && e.Poi && rs.MinimapLabelNpc)
