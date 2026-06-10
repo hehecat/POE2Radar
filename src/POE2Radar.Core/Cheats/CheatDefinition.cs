@@ -41,7 +41,7 @@ public sealed record CheatDefinition(
             CheatType.NopInstruction),
 
         new("EnemyHealthBars", "敌人血条",
-            [0x0F, 0x48, 0xCB, 0x39, 0x4E, 0x30, 0x7C],
+            [0x0F, 0x48, 0xCB, 0x39, 0x4E, null, 0x7C],
             TargetOffset: 6,
             PatchBytes: [0xEB],
             CheatType.ReplaceBytes),
