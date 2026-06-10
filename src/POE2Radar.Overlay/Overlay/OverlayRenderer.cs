@@ -424,8 +424,8 @@ public sealed class OverlayRenderer : IDisposable
     }
 
     /// <summary>
-    /// World-space HP bars over Magic/Rare/Unique monsters, projected via the camera WorldToScreen
-    /// matrix. Drawn whether or not the big map is open (it's a heads-up combat overlay).
+    /// World-space HP bars over visible monsters, projected via the camera WorldToScreen matrix.
+    /// Drawn whether or not the big map is open (it's a heads-up combat overlay).
     /// </summary>
     private void DrawNameplates(ID2D1RenderTarget rt, RenderContext ctx)
     {
@@ -434,7 +434,7 @@ public sealed class OverlayRenderer : IDisposable
         foreach (var e in ctx.Entities)
         {
             if (e.Category != Poe2Live.EntityCategory.Monster || !e.IsAlive || e.HpMax <= 0) continue;
-            if (e.Rarity is Poe2Live.Rarity.Normal or Poe2Live.Rarity.NonMonster) continue; // Magic/Rare/Unique only
+            if (!ShouldDrawMonsterHealthBar(e, ctx.Radar)) continue;
 
             var w = e.World;
             var cw = w.X*m[3] + w.Y*m[7] + w.Z*m[11] + m[15];
@@ -452,14 +452,16 @@ public sealed class OverlayRenderer : IDisposable
             {
                 Poe2Live.Rarity.Unique => (hpBars?.WidthUnique ?? 64f) * npScale,
                 Poe2Live.Rarity.Rare   => (hpBars?.WidthRare ?? 50f) * npScale,
-                _                      => (hpBars?.WidthMagic ?? 38f) * npScale,
+                Poe2Live.Rarity.Magic  => (hpBars?.WidthMagic ?? 38f) * npScale,
+                _                      => (hpBars?.WidthNormal ?? 30f) * npScale,
             };
             var styles2 = rs2?.Styles;
             var barStyle = e.Rarity switch
             {
                 Poe2Live.Rarity.Unique => styles2?.MonsterUnique,
                 Poe2Live.Rarity.Rare   => styles2?.MonsterRare,
-                _                      => styles2?.MonsterMagic,
+                Poe2Live.Rarity.Magic  => styles2?.MonsterMagic,
+                _                      => styles2?.MonsterNormal,
             };
             SetStyleBrush(barStyle?.Color ?? "#FF7300", barStyle?.Opacity ?? 1f);
             var col = _bStyle!;
@@ -472,6 +474,18 @@ public sealed class OverlayRenderer : IDisposable
             rt.FillRectangle(new Vortice.RawRectF(bx, by, bx + bw * frac, by + bh), fill);
             rt.DrawRectangle(new Vortice.RawRectF(bx, by, bx + bw, by + bh), col, 1f);
         }
+    }
+
+    private static bool ShouldDrawMonsterHealthBar(Poe2Live.EntityDot e, RadarSettings? rs)
+    {
+        if (e.Rarity == Poe2Live.Rarity.NonMonster) return false;
+        return e.Rarity switch
+        {
+            Poe2Live.Rarity.Unique => rs?.ShowUniqueMonsters != false,
+            Poe2Live.Rarity.Rare => rs?.ShowRareMonsters != false,
+            Poe2Live.Rarity.Magic => rs?.ShowMonsters != false,
+            _ => rs?.ShowMonsters != false && rs?.ShowNormalMonsters != false,
+        };
     }
 
     private void DrawGroundWaypoints(ID2D1RenderTarget rt, RenderContext ctx)
