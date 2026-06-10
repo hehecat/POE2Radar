@@ -126,6 +126,10 @@ public sealed class RadarSettings
     public bool HideUntargetable { get; set; } = false;
 
     // Nameplate HP bars
+    public bool HpBarNormal { get; set; } = false;
+    public bool HpBarMagic { get; set; } = true;
+    public bool HpBarRare { get; set; } = true;
+    public bool HpBarUnique { get; set; } = true;
     public float NameplateBarWidth { get; set; } = 1.0f;
     public float NameplateBarHeight { get; set; } = 5f;
     public float NameplateOffsetY { get; set; } = -30f;

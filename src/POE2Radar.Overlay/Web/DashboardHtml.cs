@@ -524,6 +524,10 @@ const settingsDef = [
   ]},
   {section:'生命条铭牌',items:[
     {key:'showNameplates',label:'显示生命条',type:'bool'},
+    {key:'hpBarNormal',label:'普通怪血条',type:'bool'},
+    {key:'hpBarMagic',label:'魔法怪血条',type:'bool'},
+    {key:'hpBarRare',label:'稀有怪血条',type:'bool'},
+    {key:'hpBarUnique',label:'传奇怪血条',type:'bool'},
     {key:'nameplateBarWidth',label:'条宽比例',type:'num',min:0.3,max:3,step:0.1},
     {key:'nameplateBarHeight',label:'条高（像素）',type:'num',min:1,max:20,step:1},
     {key:'nameplateOffsetY',label:'Y 偏移（负数为上方）',type:'num',min:-100,max:50,step:1},

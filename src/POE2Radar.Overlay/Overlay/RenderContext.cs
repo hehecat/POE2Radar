@@ -13,6 +13,8 @@ public readonly record struct AtlasMark(
 
 public readonly record struct AtlasInspect(float X, float Y, IReadOnlyList<string> Lines);
 
+public readonly record struct HpBarTarget(POE2Radar.Core.Game.Vector3 World, float Frac, float Width, uint Fill);
+
 public sealed class GameDataIndex
 {
     public static GameDataIndex Shared { get; } = new();
@@ -74,4 +76,5 @@ public sealed record RenderContext(
     float AtlasShearY = 0f,
     float AtlasPersX = 0f,
     float AtlasPersY = 0f,
-    AtlasInspect? AtlasInspect = null);
+    AtlasInspect? AtlasInspect = null,
+    IReadOnlyList<HpBarTarget>? HpBarTargets = null);

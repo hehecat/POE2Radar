@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Runtime.InteropServices;
 using NumVec2 = System.Numerics.Vector2;
 using POE2Radar.Core;
@@ -38,6 +39,9 @@ public sealed class RadarApp : IDisposable
 
     private DateTime _worldAt = DateTime.MinValue;
     private List<Poe2Live.EntityDot> _entities = new();
+    private readonly record struct HpBarSpec(nint Entity, float Width, uint Fill);
+    private readonly List<HpBarSpec> _hpSpecs = new();
+    private readonly List<HpBarTarget> _hpFrame = new();
     private IReadOnlyList<Poe2Live.Landmark> _landmarks = Array.Empty<Poe2Live.Landmark>();
     private Poe2Live.TerrainData? _terrain;
     private uint _areaHash;
@@ -138,7 +142,13 @@ public sealed class RadarApp : IDisposable
 
         if (inGame)
         {
-            if (areaInstance != _lastAreaInstance) { _terrain = null; _lastAreaInstance = areaInstance; }
+            if (areaInstance != _lastAreaInstance)
+            {
+                _terrain = null;
+                _hpSpecs.Clear();
+                _hpFrame.Clear();
+                _lastAreaInstance = areaInstance;
+            }
             _areaHash = _live.AreaHash(areaInstance);
             areaLevel = _live.AreaLevel(areaInstance);
 
@@ -158,14 +168,18 @@ public sealed class RadarApp : IDisposable
                 _terrain ??= _live.Terrain(areaInstance);
                 _entities = _live.Entities(areaInstance);
                 _landmarks = _live.Landmarks(areaInstance);
+                BuildHpSpecs(player);
                 BuildAtlasMarks(inGameState);
                 UpdatePath(player);
             }
+            RefreshHpFrame();
         }
         else
         {
             _atlasOpen = false;
             _atlasMarks.Clear();
+            _hpSpecs.Clear();
+            _hpFrame.Clear();
         }
 
         _state = new RadarState(inGame, _areaHash, areaLevel, map.IsVisible, map.Zoom, player, _entities, _landmarks,
@@ -220,8 +234,65 @@ public sealed class RadarApp : IDisposable
             AtlasOpen: _atlasOpen,
             AtlasNodes: _atlasMarks,
             AtlasScale: AtlasProjectionScale(),
-            AtlasScaleY: AtlasProjectionScale());
+            AtlasScaleY: AtlasProjectionScale(),
+            HpBarTargets: _hpFrame);
         _renderer.Render(ctx);
+    }
+
+    private void BuildHpSpecs(NumVec2 player)
+    {
+        _hpSpecs.Clear();
+        if (!_radarSettings.ShowNameplates) return;
+
+        var hpBars = _radarSettings.HpBars;
+        var styles = _radarSettings.Styles;
+        foreach (var e in _entities)
+        {
+            if (e.Category != Poe2Live.EntityCategory.Monster || !e.IsAlive || e.HpMax <= 0) continue;
+            if (_radarSettings.HideJunkEntities && JunkFilter.IsJunk(e.Metadata)) continue;
+            if (_hidden.IsHidden(e.Metadata)) continue;
+            if (_radarSettings.HideUntargetable && !e.IsTargetable) continue;
+            if (e.IsFriendly && !_radarSettings.ShowFriendlyEntities) continue;
+            if (e.IsImmobile && !_radarSettings.ShowImmobileEntities) continue;
+
+            var drawRange = _radarSettings.EntityDrawRange;
+            if (drawRange > 0 && (e.Grid - player).LengthSquared() > drawRange * drawRange) continue;
+
+            var minHp = _radarSettings.MinEntityHpPct;
+            if (minHp > 0 && e.HpFraction * 100f < minHp) continue;
+
+            var (enabled, width, color) = e.Rarity switch
+            {
+                Poe2Live.Rarity.Unique => (_radarSettings.HpBarUnique && _radarSettings.ShowUniqueMonsters, hpBars.WidthUnique, styles.MonsterUnique.Color),
+                Poe2Live.Rarity.Rare => (_radarSettings.HpBarRare && _radarSettings.ShowRareMonsters, hpBars.WidthRare, styles.MonsterRare.Color),
+                Poe2Live.Rarity.Magic => (_radarSettings.HpBarMagic && _radarSettings.ShowMonsters, hpBars.WidthMagic, styles.MonsterMagic.Color),
+                Poe2Live.Rarity.Normal => (_radarSettings.HpBarNormal && _radarSettings.ShowMonsters && _radarSettings.ShowNormalMonsters, hpBars.WidthNormal, styles.MonsterNormal.Color),
+                _ => (false, 0f, "#FFFFFF"),
+            };
+            width *= _radarSettings.NameplateBarWidth;
+            if (!enabled || width <= 0f) continue;
+
+            _hpSpecs.Add(new HpBarSpec(e.Address, width, PackColor(color)));
+        }
+    }
+
+    private void RefreshHpFrame()
+    {
+        _hpFrame.Clear();
+        foreach (var spec in _hpSpecs)
+        {
+            if (!_live.TryLiveBar(spec.Entity, out var world, out var cur, out var max) || max <= 0 || cur <= 0) continue;
+            _hpFrame.Add(new HpBarTarget(world, Math.Clamp((float)cur / max, 0f, 1f), spec.Width, spec.Fill));
+        }
+    }
+
+    private static uint PackColor(string? hex)
+    {
+        if (string.IsNullOrWhiteSpace(hex)) return 0xFFFFFFFFu;
+        var s = hex.Trim().TrimStart('#');
+        return s.Length >= 6 && uint.TryParse(s[..6], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var rgb)
+            ? 0xFF000000u | rgb
+            : 0xFFFFFFFFu;
     }
 
     private string? ResolvePathTargetName()

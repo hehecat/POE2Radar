@@ -172,32 +172,72 @@ public sealed class Poe2Live
 
     private nint _plLife, _plLifeFor;
 
-    // Self-healing vital offsets: if the configured Health offset reads garbage after a patch,
-    // scan the Life component for valid VitalStructs and auto-relocate. Health is safety-critical
-    // (auto-flask); mana degrades safely to "always full" if its offset drifts.
+    // VitalStruct offsets within Life slide between patches. Validate them once against a live Life
+    // component and heal small drift, so auto-flask and monster HP bars do not silently read zeros.
     private int _healthOff = Poe2.Life.Health, _manaOff = Poe2.Life.Mana, _esOff = Poe2.Life.EnergyShield;
+    private bool _esOffKnown = true;
     private bool _vitalOffsetsResolved;
+
+    private static bool LooksLikeRealPool(in VitalStruct v)
+        => v.LooksValid() && v.ReservedFraction is >= 0 and <= 10000;
+
+    private int ResolveVitalOffset(nint lifeComp, int configured)
+    {
+        if (_reader.TryReadStruct<VitalStruct>(lifeComp + configured, out var v) && v.LooksValid())
+            return configured;
+
+        int best = -1, bestDist = int.MaxValue;
+        for (var off = Math.Max(0x80, configured - 0x18); off <= configured + 0x30; off += 4)
+        {
+            if (_reader.TryReadStruct<VitalStruct>(lifeComp + off, out var c) && LooksLikeRealPool(c))
+            {
+                var dist = Math.Abs(off - configured);
+                if (dist < bestDist) { bestDist = dist; best = off; }
+            }
+        }
+        return best;
+    }
 
     private void EnsureVitalOffsets(nint lifeComp)
     {
         if (_vitalOffsetsResolved || lifeComp == 0) return;
-        if (_reader.TryReadStruct<VitalStruct>(lifeComp + Poe2.Life.Health, out var h) && h.LooksValid())
-        { _vitalOffsetsResolved = true; return; }
 
-        var found = new List<int>(4);
-        for (var off = 0x80; off <= 0x400 && found.Count < 4;)
+        var health = ResolveVitalOffset(lifeComp, Poe2.Life.Health);
+        if (health < 0)
         {
-            if (_reader.TryReadStruct<VitalStruct>(lifeComp + off, out var v) && v.LooksValid())
-            { found.Add(off); off += 0x34; }
-            else off += 4;
+            for (var off = 0x80; off <= 0x400; off += 4)
+            {
+                if (_reader.TryReadStruct<VitalStruct>(lifeComp + off, out var v) && LooksLikeRealPool(v))
+                {
+                    health = off;
+                    break;
+                }
+            }
+            if (health < 0) return;
         }
-        if (found.Count == 0) return;
 
         _vitalOffsetsResolved = true;
-        _healthOff = found[0];
+        _healthOff = health;
         if (_healthOff != Poe2.Life.Health)
-            Console.WriteLine($"Poe2Live: Life Health offset drifted — auto-relocated " +
-                $"0x{Poe2.Life.Health:X}->0x{_healthOff:X}. Update Poe2.Life + re-validate (Research --hp).");
+            Console.WriteLine($"Poe2Live: Life Health offset appears to have drifted — auto-relocated " +
+                $"0x{Poe2.Life.Health:X}->0x{_healthOff:X} (life flask + HP bars keep working). Update Poe2.Life + re-validate (Research --vitals).");
+
+        var es = ResolveVitalOffset(lifeComp, Poe2.Life.EnergyShield);
+        if (es >= 0)
+        {
+            _esOff = es;
+            if (_esOff != Poe2.Life.EnergyShield)
+                Console.WriteLine($"Poe2Live: Life EnergyShield offset appears to have drifted — auto-relocated " +
+                    $"0x{Poe2.Life.EnergyShield:X}->0x{_esOff:X}.");
+        }
+        else
+        {
+            _esOffKnown = false;
+            Console.WriteLine($"Poe2Live: Life EnergyShield offset (0x{Poe2.Life.EnergyShield:X}) could not be confirmed.");
+        }
+
+        var mana = ResolveVitalOffset(lifeComp, Poe2.Life.Mana);
+        if (mana >= 0) _manaOff = mana;
     }
 
     /// <summary>
@@ -211,7 +251,8 @@ public sealed class Poe2Live
         EnsureVitalOffsets(_plLife);
         if (!_reader.TryReadStruct<VitalStruct>(_plLife + _healthOff, out var hp) || hp.Max <= 0) return null;
         _reader.TryReadStruct<VitalStruct>(_plLife + _manaOff, out var mana);
-        _reader.TryReadStruct<VitalStruct>(_plLife + _esOff, out var es);
+        var es = default(VitalStruct);
+        if (_esOffKnown) _reader.TryReadStruct<VitalStruct>(_plLife + _esOff, out es);
         return new Vitals(hp.Current, Unreserved(hp), mana.Current, Unreserved(mana), es.Current, Unreserved(es));
     }
 
@@ -386,6 +427,7 @@ public sealed class Poe2Live
             _lifeAddr[entity] = life;
         }
         if (life == 0) return (0, 0);
+        EnsureVitalOffsets(life);
         if (!_reader.TryReadStruct<VitalStruct>(life + _healthOff, out var v)) return (0, 0);
         return (v.Current, v.Max);
     }
@@ -794,6 +836,27 @@ public sealed class Poe2Live
         if (_reader.TryReadBytes(cam + Poe2.Camera.WorldToScreenMatrix, _camBytes) != 64) return null;
         System.Buffer.BlockCopy(_camBytes, 0, _camMatrix, 0, 64);
         return _camMatrix;
+    }
+
+    /// <summary>
+    /// Render-rate live read for an already-known monster: reuses cached Render/Life component
+    /// addresses from the last entity walk, then reads current world position and HP only.
+    /// </summary>
+    public bool TryLiveBar(nint entity, out Vector3 world, out int hpCur, out int hpMax)
+    {
+        world = default; hpCur = 0; hpMax = 0;
+        if (!_renderAddr.TryGetValue(entity, out var render) || render == 0) return false;
+        if (!_reader.TryReadStruct<Vector3>(render + Poe2.Render.CurrentWorldPosition, out world)) return false;
+        if (_lifeAddr.TryGetValue(entity, out var life) && life != 0)
+        {
+            EnsureVitalOffsets(life);
+            if (_reader.TryReadStruct<VitalStruct>(life + _healthOff, out var v))
+            {
+                hpCur = v.Current;
+                hpMax = v.Max;
+            }
+        }
+        return true;
     }
 
     private EntityCategory Categorize(nint entity)

@@ -424,19 +424,22 @@ public sealed class OverlayRenderer : IDisposable
     }
 
     /// <summary>
-    /// World-space HP bars over Magic/Rare/Unique monsters, projected via the camera WorldToScreen
-    /// matrix. Drawn whether or not the big map is open (it's a heads-up combat overlay).
+    /// World-space HP bars over preselected monsters, projected via the camera WorldToScreen matrix.
+    /// Drawn whether or not the big map is open (it's a heads-up combat overlay).
     /// </summary>
     private void DrawNameplates(ID2D1RenderTarget rt, RenderContext ctx)
     {
-        if (ctx.CameraMatrix is not { } m) return;
+        if (ctx.CameraMatrix is not { } m || ctx.HpBarTargets is not { Count: > 0 } bars) return;
         float W = ctx.WindowWidth, H = ctx.WindowHeight;
-        foreach (var e in ctx.Entities)
-        {
-            if (e.Category != Poe2Live.EntityCategory.Monster || !e.IsAlive || e.HpMax <= 0) continue;
-            if (e.Rarity is Poe2Live.Rarity.Normal or Poe2Live.Rarity.NonMonster) continue; // Magic/Rare/Unique only
+        var rs = ctx.Radar;
+        var hpBars = rs?.HpBars;
+        var bh = rs?.NameplateBarHeight ?? hpBars?.Height ?? 5f;
+        var offX = hpBars?.OffsetX ?? 0f;
+        var offY = rs?.NameplateOffsetY ?? hpBars?.OffsetY ?? -30f;
 
-            var w = e.World;
+        foreach (var target in bars)
+        {
+            var w = target.World;
             var cw = w.X*m[3] + w.Y*m[7] + w.Z*m[11] + m[15];
             if (cw <= 0.0001f) continue;
             var cx = w.X*m[0] + w.Y*m[4] + w.Z*m[8] + m[12];
@@ -445,34 +448,24 @@ public sealed class OverlayRenderer : IDisposable
             var sy = (0.5f - cy/cw/2f) * H;
             if (sx < 0 || sx > W || sy < 0 || sy > H) continue;
 
-            var rs2 = ctx.Radar;
-            var hpBars = rs2?.HpBars;
-            var npScale = rs2?.NameplateBarWidth ?? 1.0f;
-            var bw = e.Rarity switch
-            {
-                Poe2Live.Rarity.Unique => (hpBars?.WidthUnique ?? 64f) * npScale,
-                Poe2Live.Rarity.Rare   => (hpBars?.WidthRare ?? 50f) * npScale,
-                _                      => (hpBars?.WidthMagic ?? 38f) * npScale,
-            };
-            var styles2 = rs2?.Styles;
-            var barStyle = e.Rarity switch
-            {
-                Poe2Live.Rarity.Unique => styles2?.MonsterUnique,
-                Poe2Live.Rarity.Rare   => styles2?.MonsterRare,
-                _                      => styles2?.MonsterMagic,
-            };
-            SetStyleBrush(barStyle?.Color ?? "#FF7300", barStyle?.Opacity ?? 1f);
-            var col = _bStyle!;
-            var bh = hpBars?.Height ?? rs2?.NameplateBarHeight ?? 5f;
-            var bx = sx - bw / 2f + (hpBars?.OffsetX ?? 0f);
-            var by = sy + (hpBars?.OffsetY ?? rs2?.NameplateOffsetY ?? -30f);
-            var frac = e.HpFraction;
+            var bw = target.Width;
+            var bx = sx - bw / 2f + offX;
+            var by = sy + offY;
+            var frac = target.Frac;
+            _bStyle!.Color = frac < 0.3f ? ColMonster : ColorFromPacked(target.Fill);
             rt.FillRectangle(new Vortice.RawRectF(bx, by, bx + bw, by + bh), _bPanel!);
-            var fill = frac < 0.3f ? _bMonster! : col;
-            rt.FillRectangle(new Vortice.RawRectF(bx, by, bx + bw * frac, by + bh), fill);
-            rt.DrawRectangle(new Vortice.RawRectF(bx, by, bx + bw, by + bh), col, 1f);
+            rt.FillRectangle(new Vortice.RawRectF(bx, by, bx + bw * frac, by + bh), _bStyle);
+            _bStyle.Color = ColorFromPacked(target.Fill);
+            rt.DrawRectangle(new Vortice.RawRectF(bx, by, bx + bw, by + bh), _bStyle, 1f);
         }
     }
+
+    private static Color4 ColorFromPacked(uint argb)
+        => new(
+            ((argb >> 16) & 0xFF) / 255f,
+            ((argb >> 8) & 0xFF) / 255f,
+            (argb & 0xFF) / 255f,
+            ((argb >> 24) & 0xFF) / 255f);
 
     private void DrawGroundWaypoints(ID2D1RenderTarget rt, RenderContext ctx)
     {
