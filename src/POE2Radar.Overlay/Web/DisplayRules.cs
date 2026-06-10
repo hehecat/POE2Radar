@@ -180,9 +180,9 @@ public sealed class DisplayRules
         var rules = new List<DisplayRule>();
 
         // 1) State hides (precede everything — mirror the old IsDrawable corpse/opened/complete gate).
-        rules.Add(new DisplayRule { Name = "Hide dead monsters",        Categories = new() { "Monster" }, Life = "Dead",     Hide = true });
-        rules.Add(new DisplayRule { Name = "Hide opened chests",        Categories = new() { "Chest" },   Chest = "Opened",  Hide = true });
-        rules.Add(new DisplayRule { Name = "Hide completed encounters", Encounter = "Complete",                              Hide = true });
+        rules.Add(new DisplayRule { Name = "隐藏死亡怪物",        Categories = new() { "Monster" }, Life = "Dead",     Hide = true });
+        rules.Add(new DisplayRule { Name = "隐藏已开启宝箱",      Categories = new() { "Chest" },   Chest = "Opened",  Hide = true });
+        rules.Add(new DisplayRule { Name = "隐藏已完成遭遇",      Encounter = "Complete",                              Hide = true });
 
         // 2) Watched highlights (force-draw + label; substring, any category) — before mechanics so
         //    watched still wins, matching the old DrawMap precedence.
@@ -206,7 +206,7 @@ public sealed class DisplayRules
         // 4) Category defaults.
         void Mon(string rarity, IconStyle s) => rules.Add(new DisplayRule
         {
-            Name = $"Monster · {rarity}", Enabled = s.Enabled && showMonsters,
+            Name = $"怪物 · {RarityLabel(rarity)}", Enabled = s.Enabled && showMonsters,
             Categories = new() { "Monster" }, Reaction = "Hostile", Rarity = rarity,
             Shape = s.Shape, Color = s.Color, Opacity = s.Opacity, Size = s.Size,
         });
@@ -220,22 +220,31 @@ public sealed class DisplayRules
             Name = name, Enabled = s.Enabled, Categories = new() { category }, Rarity = rarity,
             Shape = s.Shape, Color = s.Color, Opacity = s.Opacity, Size = s.Size,
         });
-        Cat("Player",        "Player",     null,     st.Player);
+        Cat("玩家",          "Player",     null,     st.Player);
         Cat("NPC",           "Npc",        null,     st.Npc);
-        Cat("Chest · Unique", "Chest", "Unique", st.ChestUnique);
-        Cat("Chest · Rare",   "Chest", "Rare",   st.ChestRare);
-        Cat("Transition",    "Transition", null,     st.Transition);
+        Cat("宝箱 · 传奇",    "Chest", "Unique", st.ChestUnique);
+        Cat("宝箱 · 稀有",    "Chest", "Rare",   st.ChestRare);
+        Cat("出口",          "Transition", null,     st.Transition);
 
         // Object/Other entities the game flags as POIs (waypoints, checkpoints, shrines…).
         rules.Add(new DisplayRule
         {
-            Name = "Point of Interest", Enabled = st.Poi.Enabled,
+            Name = "兴趣点", Enabled = st.Poi.Enabled,
             Categories = new() { "Object", "Other" }, Poi = "Yes",
             Shape = st.Poi.Shape, Color = st.Poi.Color, Opacity = st.Poi.Opacity, Size = st.Poi.Size,
         });
 
         return rules;
     }
+
+    private static string RarityLabel(string rarity) => rarity switch
+    {
+        "Unique" => "传奇",
+        "Rare" => "稀有",
+        "Magic" => "魔法",
+        "Normal" => "普通",
+        _ => rarity,
+    };
 
     // ── internals ───────────────────────────────────────────────────────────
 

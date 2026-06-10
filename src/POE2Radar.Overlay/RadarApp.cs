@@ -50,6 +50,7 @@ public sealed class RadarApp : IDisposable
     private volatile bool _shutdown;
 
     private DateTime _nextKeyAt = DateTime.MinValue;
+    private DateTime _settingsSaveAt = DateTime.MinValue;
     private List<(int X, int Y)>? _pathPoints;
     private NumVec2 _lastPathPlayerGrid;
     private string _lastPathTarget = "";
@@ -99,7 +100,8 @@ public sealed class RadarApp : IDisposable
         _cheats = new CheatManager(process, reader);
         Console.WriteLine("\n正在扫描游戏补丁特征码...");
         _cheats.ScanAndResolve();
-        Console.WriteLine("热键：F1-F5 游戏补丁，F8 自动药剂，F9 设置，F10 显示/隐藏 overlay，F11 网页控制台\n");
+        Console.WriteLine("热键：F1-F5 游戏补丁，F8 自动药剂，F9 设置，F10 显示/隐藏 overlay，F11 网页控制台");
+        Console.WriteLine("地图校准：PageUp/PageDown 缩放，方向键微调，Home 重置（自动保存）\n");
         _window = OverlayWindow.Create();
         _renderer = new OverlayRenderer(_window);
         var configDir = IOPath.Combine(IOPath.GetDirectoryName(Environment.ProcessPath) ?? ".", "config");
@@ -134,6 +136,7 @@ public sealed class RadarApp : IDisposable
         HandleSettingsToggle();
         HandleAltClick();
         HandleShiftInspect();
+        FlushPendingSettingsSave();
 
         var inGame = _live.TryResolve(out var inGameState, out var areaInstance, out var localPlayer);
         var player = NumVec2.Zero;
@@ -299,8 +302,9 @@ public sealed class RadarApp : IDisposable
     {
         if (_manualPathGridTarget is { } p) return $"网格 ({p.X}, {p.Y})";
         if (string.IsNullOrWhiteSpace(_manualPathPattern)) return null;
-        return _pathing.All.FirstOrDefault(e =>
+        var label = _pathing.All.FirstOrDefault(e =>
             e.Pattern.Equals(_manualPathPattern, StringComparison.OrdinalIgnoreCase))?.Label ?? _manualPathPattern;
+        return OverlayText.Localize(label);
     }
 
     private float AtlasProjectionScale()
@@ -347,6 +351,7 @@ public sealed class RadarApp : IDisposable
 
             var label = matched ?? (n.HasContent ? string.Join(", ", n.Tags.Take(2)) : null);
             if (string.IsNullOrWhiteSpace(label)) label = n.MapName;
+            label = OverlayText.Localize(label);
             marks.Add(new AtlasMark(n.X, n.Y, tracked, n.HasContent, n.Visited, n.Unlocked, n.Biome, n.IconType, label, color, arrow));
         }
 
@@ -377,7 +382,7 @@ public sealed class RadarApp : IDisposable
                 _pathPoints = null;
                 _lastPathTarget = "";
                 _lastPathPlayerGrid = NumVec2.Zero;
-                Console.WriteLine($"\n路线目标：{next.Label} ({next.Pattern})");
+                Console.WriteLine($"\n路线目标：{OverlayText.Localize(next.Label)} ({next.Pattern})");
             }
         }
         // F11 打开网页控制台
@@ -481,8 +486,7 @@ public sealed class RadarApp : IDisposable
             {
                 bestDist = d2;
                 bestMeta = e.Metadata;
-                var parts = e.Metadata.Split('/');
-                bestName = $"{CategoryLabel(e.Category)} | {parts[^1].Split('@')[0]} | {RarityLabel(e.Rarity)}" +
+                bestName = $"{CategoryLabel(e.Category)} | {OverlayText.EntityLabel(EntityNameResolver.Shared, e.Metadata)} | {RarityLabel(e.Rarity)}" +
                     (e.HpMax > 0 ? $" | 生命 {e.HpCur}/{e.HpMax}" : "") +
                     (e.Poi ? " | POI" : "") +
                     (e.IsFriendly ? " | 友方" : "");
@@ -555,7 +559,7 @@ public sealed class RadarApp : IDisposable
             _pathPoints = null;
             _lastPathTarget = "";
             _lastPathPlayerGrid = NumVec2.Zero;
-            Console.WriteLine($"\nAlt+点击导航：{shortName}");
+            Console.WriteLine($"\nAlt+点击导航：{OverlayText.Localize(shortName)}");
         }
     }
 
@@ -663,9 +667,23 @@ public sealed class RadarApp : IDisposable
         else changed = false;
         if (changed)
         {
+            _radarSettings.ScaleMul = Math.Clamp(_radarSettings.ScaleMul, 0.3f, 3f);
+            _radarSettings.OffsetX = Math.Clamp(_radarSettings.OffsetX, -1000f, 1000f);
+            _radarSettings.OffsetY = Math.Clamp(_radarSettings.OffsetY, -1000f, 1000f);
+            ScheduleSettingsSave();
             _nextKeyAt = DateTime.UtcNow.AddMilliseconds(40);
             Console.Write($"\r校准：缩放={_radarSettings.ScaleMul:F3} 偏移=({_radarSettings.OffsetX:F0},{_radarSettings.OffsetY:F0})        ");
         }
+    }
+
+    private void ScheduleSettingsSave()
+        => _settingsSaveAt = DateTime.UtcNow.AddMilliseconds(250);
+
+    private void FlushPendingSettingsSave()
+    {
+        if (_settingsSaveAt == DateTime.MinValue || DateTime.UtcNow < _settingsSaveAt) return;
+        _settingsSaveAt = DateTime.MinValue;
+        _radarSettings.Save();
     }
 
     private void HandleCheatKeys()
@@ -710,6 +728,7 @@ public sealed class RadarApp : IDisposable
     public void Dispose()
     {
         _cheats.RestoreAll();
+        _radarSettings.Save();
         _settingsForm?.Dispose();
         _api.Dispose();
         _renderer.Dispose();

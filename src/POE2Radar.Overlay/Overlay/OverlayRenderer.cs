@@ -166,6 +166,15 @@ public sealed class OverlayRenderer : IDisposable
         _window.Present();
     }
 
+    private static float EstimateTextWidth(string? text, float fontSize)
+    {
+        if (string.IsNullOrEmpty(text)) return 0f;
+        var w = 0f;
+        foreach (var ch in text)
+            w += ch > 0x7f ? fontSize : fontSize * 0.58f;
+        return w;
+    }
+
     private void DrawStatus(ID2D1RenderTarget rt, RenderContext ctx)
     {
         if (ctx.Radar?.ShowStatusBar == false) return;
@@ -189,7 +198,6 @@ public sealed class OverlayRenderer : IDisposable
 
         var fs = ctx.Radar?.StatusFontSize ?? 12f;
         var stf = GetTextFormat(fs, ref _tfStatus, ref _lastStatusFs);
-        var cw = fs * 0.6f;
         var lh = fs + 4f;
 
         var zoneName = ctx.AreaName ?? ctx.AreaCode;
@@ -198,17 +206,19 @@ public sealed class OverlayRenderer : IDisposable
         var line = !ctx.InGame
             ? "等待进入游戏..."
             : $"{zoneInfo}  {ctx.CharName ?? ""} Lv{ctx.CharLevel}  生命 {ctx.HpPct:F0}%  魔力 {ctx.ManaPct:F0}%  药剂：{ctx.FlaskNote}";
-        rt.FillRectangle(new Vortice.RawRectF(6, 6, 6 + line.Length * cw + 10, 6 + lh), _bPanel!);
-        rt.DrawText(line, stf, new Rect(12, 8, 1200, 8 + lh), _bText!, DrawTextOptions.Clip);
+        var lineW = Math.Min(ctx.WindowWidth - 12f, EstimateTextWidth(line, fs) + 18f);
+        rt.FillRectangle(new Vortice.RawRectF(6, 6, 6 + lineW, 6 + lh), _bPanel!);
+        rt.DrawText(line, stf, new Rect(12, 8, 12 + lineW, 8 + lh), _bText!, DrawTextOptions.Clip);
 
         if (ctx.InGame)
         {
             var hud = $"存活:{alive} (普通:{normals} 魔法:{magics} 稀有:{rares} 传奇:{uniques})  NPC:{npcs}  宝箱:{chests}  出口:{transitions}";
             var hudY = 6 + lh + 2f;
-            rt.FillRectangle(new Vortice.RawRectF(6, hudY, 6 + hud.Length * cw + 10, hudY + lh), _bPanel!);
+            var hudW = Math.Min(ctx.WindowWidth - 12f, EstimateTextWidth(hud, fs) + 18f);
+            rt.FillRectangle(new Vortice.RawRectF(6, hudY, 6 + hudW, hudY + lh), _bPanel!);
 
             var cx = 12f;
-            void DrawSeg(string t, ID2D1SolidColorBrush b) { rt.DrawText(t, stf, new Rect(cx, hudY + 2, cx + 600, hudY + lh), b); cx += t.Length * cw; }
+            void DrawSeg(string t, ID2D1SolidColorBrush b) { rt.DrawText(t, stf, new Rect(cx, hudY + 2, cx + 600, hudY + lh), b); cx += EstimateTextWidth(t, fs); }
             DrawSeg($"存活:{alive} (", _bText!);
             DrawSeg($"普通:{normals} ", _bMonster!);
             DrawSeg($"魔法:{magics} ", _bMagic!);
@@ -231,17 +241,22 @@ public sealed class OverlayRenderer : IDisposable
             var cx = 12f;
             var cy = 6 + lh * 2 + 4f;
             var label = "补丁：";
-            rt.FillRectangle(new Vortice.RawRectF(6, cy - 2, 500, cy + lh), _bPanel!);
-            rt.DrawText(label, stf, new Rect(cx, cy, cx + 200, cy + lh), _bText!, DrawTextOptions.Clip);
-            cx += label.Length * cw;
-
-            foreach (var (_, info) in cheats)
+            var cheatTags = cheats.Select(kv =>
             {
+                var info = kv.Value;
                 var tag = info.Active ? "开" : info.Found ? "关" : "--";
                 var brush = info.Active ? _bCheatOn! : info.Found ? _bCheatOff! : _bCheatMiss!;
-                var text = $"{info.ShortName}[{tag}] ";
+                return (Text: $"{info.ShortName}[{tag}] ", Brush: brush);
+            }).ToList();
+            var cheatW = Math.Min(ctx.WindowWidth - 12f, EstimateTextWidth(label + string.Concat(cheatTags.Select(t => t.Text)), fs) + 18f);
+            rt.FillRectangle(new Vortice.RawRectF(6, cy - 2, 6 + cheatW, cy + lh), _bPanel!);
+            rt.DrawText(label, stf, new Rect(cx, cy, cx + 200, cy + lh), _bText!, DrawTextOptions.Clip);
+            cx += EstimateTextWidth(label, fs);
+
+            foreach (var (text, brush) in cheatTags)
+            {
                 rt.DrawText(text, stf, new Rect(cx, cy, cx + 200, cy + lh), brush, DrawTextOptions.Clip);
-                cx += text.Length * cw;
+                cx += EstimateTextWidth(text, fs);
             }
         }
 
@@ -251,16 +266,13 @@ public sealed class OverlayRenderer : IDisposable
             var poiY = 6 + lh * 3 + 8f;
             var poiFs = fs * 0.9f;
             var poiTf = GetTextFormat(poiFs, ref _tfTransition, ref _lastTrFs);
-            var poiCw = poiFs * 0.6f;
             var lines = new List<(string text, ID2D1SolidColorBrush brush)>();
 
             // Exits/transitions
             foreach (var e in ctx.Entities)
             {
                 if (e.Category != Poe2Live.EntityCategory.Transition) continue;
-                var trName = ctx.EntityNames?.ResolveOrShorten(e.Metadata) ?? e.Metadata.Split('/')[^1];
-                var destArea = ctx.GameData?.GetArea(trName);
-                var label = destArea is { } area ? $"→ {area.Name}" : $"→ {trName}";
+                var label = $"→ {OverlayText.TransitionLabel(ctx.GameData, ctx.EntityNames, e.Metadata)}";
                 if (!lines.Any(l => l.text == label))
                     lines.Add((label, _bTrans!));
             }
@@ -270,7 +282,7 @@ public sealed class OverlayRenderer : IDisposable
             foreach (var lm in ctx.Landmarks)
             {
                 if (poiHidden != null && (poiHidden.IsHidden(lm.Name) || poiHidden.IsHidden(lm.Path))) continue;
-                lines.Add(($"◆ {lm.Name}", _bLandmark!));
+                lines.Add(($"◆ {OverlayText.Localize(lm.Name)}", _bLandmark!));
             }
 
             // Quest pins
@@ -279,7 +291,7 @@ public sealed class OverlayRenderer : IDisposable
                 foreach (var pin in pins)
                 {
                     if (string.IsNullOrEmpty(pin.Name) || pin.Name == "¢") continue;
-                    lines.Add(($"● {pin.Name}", pin.Type == "quest" ? _bUnique! : _bNpc!));
+                    lines.Add(($"● {OverlayText.Localize(pin.Name)}", pin.Type == "quest" ? _bUnique! : _bNpc!));
                 }
             }
 
@@ -287,14 +299,13 @@ public sealed class OverlayRenderer : IDisposable
             foreach (var e in ctx.Entities)
             {
                 if (!e.IsBoss || !e.IsAlive) continue;
-                var bName = ctx.EntityNames?.ResolveOrShorten(e.Metadata) ?? e.Metadata.Split('/')[^1];
+                var bName = OverlayText.EntityLabel(ctx.EntityNames, e.Metadata);
                 lines.Add(($"★ 首领：{bName}", _bUnique!));
             }
 
             if (lines.Count > 0)
             {
-                var maxLen = lines.Max(l => l.text.Length);
-                var panelW = maxLen * poiCw + 20f;
+                var panelW = lines.Max(l => EstimateTextWidth(l.text, poiFs)) + 20f;
                 var panelH = lines.Count * (poiFs + 3) + 6f;
                 rt.FillRectangle(new Vortice.RawRectF(6, poiY - 2, 6 + panelW, poiY + panelH), _bPanel!);
                 rt.DrawText("地图要点：", poiTf, new Rect(10, poiY, 200, poiY + poiFs), _bText!);
@@ -358,7 +369,7 @@ public sealed class OverlayRenderer : IDisposable
 
             var label = n.Label ?? (n.IconType > 0 ? n.IconType.ToString() : null);
             if (label != null)
-                rt.DrawText(label, _tf!, new Rect(sx + 11f, sy - 9f, sx + 220f, sy + 11f), _bText!, DrawTextOptions.Clip);
+                rt.DrawText(OverlayText.Localize(label), _tf!, new Rect(sx + 11f, sy - 9f, sx + 220f, sy + 11f), _bText!, DrawTextOptions.Clip);
         }
     }
 
@@ -386,7 +397,7 @@ public sealed class OverlayRenderer : IDisposable
         rt.FillRectangle(box, _bPanel!);
         rt.DrawRectangle(box, _bStyle, 1.5f);
         for (var i = 0; i < ins.Lines.Count; i++)
-            rt.DrawText(ins.Lines[i], _tf!, new Rect(bx + padX, by + padY + i * lineHeight, bx + boxW - 4f, by + padY + (i + 1) * lineHeight + 2f), _bText!, DrawTextOptions.Clip);
+            rt.DrawText(OverlayText.Localize(ins.Lines[i]), _tf!, new Rect(bx + padX, by + padY + i * lineHeight, bx + boxW - 4f, by + padY + (i + 1) * lineHeight + 2f), _bText!, DrawTextOptions.Clip);
     }
 
     private void DrawAtlasArrow(ID2D1RenderTarget rt, float sx, float sy, float cx, float cy, float wScreen, float hScreen, Color4 color, string? label)
@@ -419,7 +430,7 @@ public sealed class OverlayRenderer : IDisposable
         {
             var lx = ex - ux * 56f;
             var ly = ey - uy * 18f;
-            rt.DrawText(label, _tf!, new Rect(lx - 95f, ly - 8f, lx + 95f, ly + 10f), _bText!, DrawTextOptions.Clip);
+            rt.DrawText(OverlayText.Localize(label), _tf!, new Rect(lx - 95f, ly - 8f, lx + 95f, ly + 10f), _bText!, DrawTextOptions.Clip);
         }
     }
 
@@ -849,7 +860,7 @@ public sealed class OverlayRenderer : IDisposable
                 DrawStyledIcon(rt, shapeName, p, wr, brush, filled: true);
                 var wFs = rs?.WatchedFontSize ?? 14f;
                 var wTf = GetTextFormat(wFs, ref _tfLandmark, ref _lastLmFs);
-                rt.DrawText(watchMatch.Label, wTf, new Rect(p.X + wr + 4, p.Y - wFs / 2, p.X + 300, p.Y + wFs), _bText!);
+                rt.DrawText(OverlayText.Localize(watchMatch.Label), wTf, new Rect(p.X + wr + 4, p.Y - wFs / 2, p.X + 300, p.Y + wFs), _bText!);
             }
             else if (e.Category == Poe2Live.EntityCategory.Transition && rs?.ShowTransitions != false)
             {
@@ -857,9 +868,7 @@ public sealed class OverlayRenderer : IDisposable
                 {
                     var trFs = rs?.TransitionFontSize ?? 12f;
                     var trTf = GetTextFormat(trFs, ref _tfTransition, ref _lastTrFs);
-                    var trName = ctx.EntityNames?.ResolveOrShorten(e.Metadata) ?? e.Metadata.Split('/')[^1];
-                    var destArea = ctx.GameData?.GetArea(trName);
-                    var destLabel = destArea is { } area ? $"→ {area.Name}" : trName;
+                    var destLabel = $"→ {OverlayText.TransitionLabel(ctx.GameData, ctx.EntityNames, e.Metadata)}";
                     rt.DrawText(destLabel, trTf, new Rect(p.X + r + 3, p.Y - trFs / 2, p.X + 300, p.Y + trFs), _bTrans!);
                 }
             }
@@ -870,7 +879,7 @@ public sealed class OverlayRenderer : IDisposable
                 {
                     var mFs = rs?.NameplateFontSize ?? 12f;
                     var mTf = GetTextFormat(mFs, ref _tfChest, ref _lastChFs);
-                    var mName = ctx.EntityNames?.ResolveOrShorten(e.Metadata) ?? e.Metadata.Split('/')[^1];
+                    var mName = OverlayText.EntityLabel(ctx.EntityNames, e.Metadata);
                     var mBrush = e.Rarity == Poe2Live.Rarity.Unique ? _bUnique! : _bRare!;
                     rt.DrawText(mName, mTf, new Rect(p.X + r + 3, p.Y - mFs / 2, p.X + 300, p.Y + mFs), mBrush);
                 }
@@ -882,7 +891,7 @@ public sealed class OverlayRenderer : IDisposable
                 {
                     var npcFs = rs?.LandmarkFontSize ?? 14f;
                     var npcTf = GetTextFormat(npcFs, ref _tfLandmark, ref _lastLmFs);
-                    var npcName = ctx.EntityNames?.ResolveOrShorten(e.Metadata) ?? e.Metadata.Split('/')[^1];
+                    var npcName = OverlayText.EntityLabel(ctx.EntityNames, e.Metadata);
                     rt.DrawText(npcName, npcTf, new Rect(p.X + r + 5, p.Y - npcFs / 2, p.X + 300, p.Y + npcFs), _bNpc!);
                 }
             }
@@ -893,7 +902,7 @@ public sealed class OverlayRenderer : IDisposable
                 {
                     var poiFs = rs?.LandmarkFontSize ?? 14f;
                     var poiTf = GetTextFormat(poiFs, ref _tfLandmark, ref _lastLmFs);
-                    var poiName = ctx.EntityNames?.ResolveOrShorten(e.Metadata) ?? e.Metadata.Split('/')[^1];
+                    var poiName = OverlayText.EntityLabel(ctx.EntityNames, e.Metadata);
                     rt.DrawText(poiName, poiTf, new Rect(p.X + r + 6, p.Y - poiFs / 2, p.X + 300, p.Y + poiFs), _bLandmark!);
                 }
             }
@@ -929,12 +938,13 @@ public sealed class OverlayRenderer : IDisposable
         {
             if (hidden != null && (hidden.IsHidden(lm.Name) || hidden.IsHidden(lm.Path))) continue;
             var p = Project(new NumVec2(lm.Center.X, lm.Center.Y), player, center, scale);
+            var lmName = OverlayText.Localize(lm.Name);
             var d = rs?.LandmarkIconSize ?? 5f;
             var diamond = new[] { new NumVec2(p.X, p.Y - d), new NumVec2(p.X + d, p.Y), new NumVec2(p.X, p.Y + d), new NumVec2(p.X - d, p.Y) };
             for (var i = 0; i < 4; i++) rt.DrawLine(diamond[i], diamond[(i + 1) % 4], _bLandmark!, lmOutW);
             if (rs?.ShowLandmarkLabels != false)
-                rt.DrawText(lm.Name, lmTf, new Rect(p.X + 7, p.Y - lmFs / 2, p.X + 300, p.Y + lmFs), _bLandmark!);
-            ctx.LandmarkScreenPositions?.Add((p.X, p.Y, lm.Center.X, lm.Center.Y, lm.Name));
+                rt.DrawText(lmName, lmTf, new Rect(p.X + 7, p.Y - lmFs / 2, p.X + 300, p.Y + lmFs), _bLandmark!);
+            ctx.LandmarkScreenPositions?.Add((p.X, p.Y, lm.Center.X, lm.Center.Y, lmName));
         }
 
         skipLandmarks:
@@ -996,11 +1006,11 @@ public sealed class OverlayRenderer : IDisposable
     private void DrawInspector(ID2D1RenderTarget rt, RenderContext ctx)
     {
         if (ctx.InspectedMeta == null) return;
-        var name = ctx.InspectedName ?? "";
+        var name = OverlayText.Localize(ctx.InspectedName ?? "");
         var meta = ctx.InspectedMeta;
 
         const float ix = 10, iy = 72;
-        var boxW = Math.Max(name.Length, meta.Length) * 7.3f + 20;
+        var boxW = Math.Max(EstimateTextWidth(name, 12f), EstimateTextWidth(meta, 12f)) + 20;
         rt.FillRoundedRectangle(
             new RoundedRectangle(new Vortice.RawRectF(ix, iy, ix + boxW, iy + 42), 4, 4), _bPanel!);
         rt.DrawRoundedRectangle(
@@ -1020,8 +1030,8 @@ public sealed class OverlayRenderer : IDisposable
         var fs = ctx.Radar?.LandmarkFontSize is > 0 ? ctx.Radar.LandmarkFontSize + 6 : 20f;
         var tf = GetTextFormat(fs, ref _tfPathTarget, ref _lastPathTargetFs);
 
-        var text = $"导航：{name}";
-        float boxW = text.Length * (fs * 0.55f) + 24;
+        var text = $"导航：{OverlayText.Localize(name)}";
+        float boxW = EstimateTextWidth(text, fs) + 24;
         float boxH = fs + 12;
         float boxX = ctx.WindowWidth * 0.5f - boxW * 0.5f;
         float boxY = 52;
@@ -1178,27 +1188,25 @@ public sealed class OverlayRenderer : IDisposable
             if (e.IsBoss && e.IsAlive && rs.MinimapLabelBoss)
             {
                 var mmLabelTf = GetTextFormat(mmLabelFs, ref _tfTransition, ref _lastTrFs);
-                var bossLabel = ctx.EntityNames?.ResolveOrShorten(e.Metadata) ?? e.Metadata.Split('/')[^1];
+                var bossLabel = OverlayText.EntityLabel(ctx.EntityNames, e.Metadata);
                 rt.DrawText(bossLabel, mmLabelTf, new Rect(p.X + r + 2, p.Y - mmLabelFs / 2, p.X + 150, p.Y + mmLabelFs), _bUnique!);
             }
             else if (e.Category == Poe2Live.EntityCategory.Monster && e.IsAlive && e.Rarity == Poe2Live.Rarity.Unique && rs.MinimapLabelUnique)
             {
                 var mmLabelTf = GetTextFormat(mmLabelFs, ref _tfTransition, ref _lastTrFs);
-                var uLabel = ctx.EntityNames?.ResolveOrShorten(e.Metadata) ?? e.Metadata.Split('/')[^1];
+                var uLabel = OverlayText.EntityLabel(ctx.EntityNames, e.Metadata);
                 rt.DrawText(uLabel, mmLabelTf, new Rect(p.X + r + 2, p.Y - mmLabelFs / 2, p.X + 120, p.Y + mmLabelFs), _bUnique!);
             }
             else if (e.Category == Poe2Live.EntityCategory.Transition && rs.MinimapLabelTransition)
             {
                 var mmLabelTf = GetTextFormat(mmLabelFs, ref _tfTransition, ref _lastTrFs);
-                var trLabel = ctx.EntityNames?.ResolveOrShorten(e.Metadata) ?? e.Metadata.Split('/')[^1];
-                var destArea = ctx.GameData?.GetArea(trLabel);
-                if (destArea is { } area) trLabel = area.Name;
+                var trLabel = OverlayText.TransitionLabel(ctx.GameData, ctx.EntityNames, e.Metadata);
                 rt.DrawText(trLabel, mmLabelTf, new Rect(p.X + r + 2, p.Y - mmLabelFs / 2, p.X + 120, p.Y + mmLabelFs), _bTrans!);
             }
             else if (e.Category == Poe2Live.EntityCategory.Npc && e.Poi && rs.MinimapLabelNpc)
             {
                 var mmLabelTf = GetTextFormat(mmLabelFs, ref _tfTransition, ref _lastTrFs);
-                var npcLabel = ctx.EntityNames?.ResolveOrShorten(e.Metadata) ?? e.Metadata.Split('/')[^1];
+                var npcLabel = OverlayText.EntityLabel(ctx.EntityNames, e.Metadata);
                 rt.DrawText(npcLabel, mmLabelTf, new Rect(p.X + r + 2, p.Y - mmLabelFs / 2, p.X + 120, p.Y + mmLabelFs), _bNpc!);
             }
         }
@@ -1214,7 +1222,7 @@ public sealed class OverlayRenderer : IDisposable
                 var w = ctx.Watched.Match(e.Metadata);
                 if (w == null || !w.Enabled) continue;
                 var p = Project(new NumVec2(e.Grid.X, e.Grid.Y), player, center, mmScale);
-                rt.DrawText(w.Label, mmLabelTf, new Rect(p.X + 4, p.Y - mmLabelFs / 2, p.X + 120, p.Y + mmLabelFs), _bText!);
+                rt.DrawText(OverlayText.Localize(w.Label), mmLabelTf, new Rect(p.X + 4, p.Y - mmLabelFs / 2, p.X + 120, p.Y + mmLabelFs), _bText!);
             }
         }
 

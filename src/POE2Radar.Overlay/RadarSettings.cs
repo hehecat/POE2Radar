@@ -47,9 +47,9 @@ public sealed class RadarSettings
 
     // Fonts (no cap — scale up for 4K)
     public string FontFamily { get; set; } = "Microsoft YaHei UI";
-    public float StatusFontSize { get; set; } = 12f;
-    public float LandmarkFontSize { get; set; } = 14f;
-    public float TransitionFontSize { get; set; } = 12f;
+    public float StatusFontSize { get; set; } = 14f;
+    public float LandmarkFontSize { get; set; } = 15f;
+    public float TransitionFontSize { get; set; } = 13f;
     public float ChestFontSize { get; set; } = 12f;
     public float WatchedFontSize { get; set; } = 14f;
     public float NameplateFontSize { get; set; } = 12f;
@@ -80,7 +80,7 @@ public sealed class RadarSettings
 
     public float MinimapOffsetX { get; set; } = 0f;
     public float MinimapOffsetY { get; set; } = 0f;
-    public float MinimapLabelFontSize { get; set; } = 9f;
+    public float MinimapLabelFontSize { get; set; } = 10f;
 
     // Minimap — what to show (dots)
     public bool MinimapShowMonsters { get; set; } = true;
@@ -384,11 +384,11 @@ public sealed class RadarStyles
 
     public List<MechanicStyle> Mechanics { get; set; } = new()
     {
-        new() { Name = "Expedition", Match = ["ExpeditionEncounter", "Expedition"], Shape = "Plus",     Color = "#26E6D9", Opacity = 1f, Size = 7f },
-        new() { Name = "Ritual",     Match = ["Ritual"],                            Shape = "Star",     Color = "#FF3355", Opacity = 1f, Size = 7f },
-        new() { Name = "Breach",     Match = ["Breach"],                            Shape = "Diamond",  Color = "#A64DFF", Opacity = 1f, Size = 7f },
-        new() { Name = "Strongbox",  Match = ["Strongbox", "StrongBoxes"],          Shape = "Square",   Color = "#FFB300", Opacity = 1f, Size = 6f },
-        new() { Name = "Essence",    Match = ["Essence"],                           Shape = "Triangle", Color = "#33E0FF", Opacity = 1f, Size = 7f },
-        new() { Name = "Shrine",     Match = ["Shrine"],                            Shape = "Star",     Color = "#7DFF7D", Opacity = 1f, Size = 6f },
+        new() { Name = "远征", Match = ["ExpeditionEncounter", "Expedition"], Shape = "Plus",     Color = "#26E6D9", Opacity = 1f, Size = 7f },
+        new() { Name = "祭祀", Match = ["Ritual"],                            Shape = "Star",     Color = "#FF3355", Opacity = 1f, Size = 7f },
+        new() { Name = "裂隙", Match = ["Breach"],                            Shape = "Diamond",  Color = "#A64DFF", Opacity = 1f, Size = 7f },
+        new() { Name = "保险箱", Match = ["Strongbox", "StrongBoxes"],        Shape = "Square",   Color = "#FFB300", Opacity = 1f, Size = 6f },
+        new() { Name = "精华", Match = ["Essence"],                           Shape = "Triangle", Color = "#33E0FF", Opacity = 1f, Size = 7f },
+        new() { Name = "神龛", Match = ["Shrine"],                             Shape = "Star",     Color = "#7DFF7D", Opacity = 1f, Size = 6f },
     };
 }

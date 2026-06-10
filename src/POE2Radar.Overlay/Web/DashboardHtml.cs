@@ -500,8 +500,8 @@ const settingsDef = [
   ]},
   {section:'校准',items:[
     {key:'resetCalibrationOnZoneChange',label:'换区自动重置校准',type:'bool'},
-    {key:'offsetX',label:'X 偏移',type:'num',min:-50,max:50,step:0.5},
-    {key:'offsetY',label:'Y 偏移',type:'num',min:-50,max:50,step:0.5},
+    {key:'offsetX',label:'X 偏移',type:'num',min:-500,max:500,step:1},
+    {key:'offsetY',label:'Y 偏移',type:'num',min:-500,max:500,step:1},
     {key:'scaleMul',label:'缩放',type:'num',min:0.3,max:3,step:0.02},
   ]},
   {section:'探索迷雾',items:[
@@ -511,7 +511,7 @@ const settingsDef = [
     {key:'fogCellScale',label:'迷雾格大小',type:'num',min:0.05,max:0.3,step:0.01},
   ]},
   {section:'地图绘制',items:[
-    {key:'mapCenterYShift',label:'地图中心 Y 偏移',type:'num',min:-100,max:100,step:1},
+    {key:'mapCenterYShift',label:'地图中心 Y 偏移',type:'num',min:-300,max:300,step:1},
     {key:'playerBlipSize',label:'玩家点大小（大地图）',type:'num',min:1,max:15,step:0.5},
 
     {key:'landmarkIconSize',label:'地标图标大小',type:'num',min:1,max:15,step:0.5},

@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using POE2Radar.Core.Game;
+using POE2Radar.Overlay;
 using POE2Radar.Overlay.Automation;
 
 namespace POE2Radar.Overlay.Web;
@@ -91,7 +92,7 @@ public sealed class ApiServer : IDisposable
             {
                 var list = s.Landmarks.OrderBy(l => Dist(l.Center, s.Player)).Select(l => new
                 {
-                    name = l.Name, path = l.Path, tiles = l.TileCount,
+                    name = OverlayText.Localize(l.Name), path = l.Path, tiles = l.TileCount,
                     x = l.Center.X, y = l.Center.Y, dist = (int)Dist(l.Center, s.Player),
                 });
                 WriteJson(ctx, list);
@@ -115,7 +116,7 @@ public sealed class ApiServer : IDisposable
                 var list = q2.OrderBy(e => Dist(e.Grid, s.Player)).Take(limit).Select(e => new
                 {
                     id = e.Id, addr = $"0x{e.Address:X}", category = e.Category.ToString(), metadata = e.Metadata,
-                    name = EntityNameResolver.Shared.ResolveOrShorten(e.Metadata),
+                    name = OverlayText.EntityLabel(EntityNameResolver.Shared, e.Metadata),
                     poi = e.Poi, friendly = e.IsFriendly, rarity = e.Rarity.ToString(),
                     x = e.Grid.X, y = e.Grid.Y, hpCur = e.HpCur, hpMax = e.HpMax,
                     boss = e.IsBoss, targetable = e.IsTargetable, locked = e.IsLocked, large = e.IsLarge,
@@ -411,7 +412,7 @@ public sealed class ApiServer : IDisposable
                 WriteJson(ctx, new
                 {
                     entity = $"0x{e.Address:X}",
-                    name = EntityNameResolver.Shared.ResolveOrShorten(e.Metadata),
+                    name = OverlayText.EntityLabel(EntityNameResolver.Shared, e.Metadata),
                     metadata = e.Metadata,
                     components = new Dictionary<string, object?>
                     {
@@ -419,8 +420,8 @@ public sealed class ApiServer : IDisposable
                         {
                             address = $"0x{e.Address:X}",
                             id = e.Id,
-                            category = e.Category.ToString(),
-                            rarity = e.Rarity.ToString(),
+                            category = CategoryLabel(e.Category),
+                            rarity = RarityLabel(e.Rarity),
                             hpCur = e.HpCur,
                             hpMax = e.HpMax,
                             alive = e.IsAlive,
@@ -428,7 +429,7 @@ public sealed class ApiServer : IDisposable
                             targetable = e.IsTargetable,
                             locked = e.IsLocked,
                             large = e.IsLarge,
-                            league = e.League.ToString(),
+                            league = LeagueLabel(e.League),
                             x = e.Grid.X,
                             y = e.Grid.Y,
                             dist = (int)Dist(e.Grid, s.Player),
@@ -487,6 +488,44 @@ public sealed class ApiServer : IDisposable
     }
 
     private static float Dist(System.Numerics.Vector2 a, System.Numerics.Vector2 b) => (a - b).Length();
+
+    private static string CategoryLabel(Poe2Live.EntityCategory category) => category switch
+    {
+        Poe2Live.EntityCategory.Monster => "怪物",
+        Poe2Live.EntityCategory.Npc => "NPC",
+        Poe2Live.EntityCategory.Chest => "宝箱",
+        Poe2Live.EntityCategory.Transition => "出口",
+        Poe2Live.EntityCategory.Player => "玩家",
+        _ => "其他",
+    };
+
+    private static string RarityLabel(Poe2Live.Rarity rarity) => rarity switch
+    {
+        Poe2Live.Rarity.Normal => "普通",
+        Poe2Live.Rarity.Magic => "魔法",
+        Poe2Live.Rarity.Rare => "稀有",
+        Poe2Live.Rarity.Unique => "传奇",
+        _ => "-",
+    };
+
+    private static string LeagueLabel(Poe2Live.LeagueMechanic league) => league switch
+    {
+        Poe2Live.LeagueMechanic.Expedition => "远征",
+        Poe2Live.LeagueMechanic.Breach => "裂隙",
+        Poe2Live.LeagueMechanic.Ritual => "祭祀",
+        Poe2Live.LeagueMechanic.Delirium => "迷雾",
+        Poe2Live.LeagueMechanic.Abyss => "深渊",
+        Poe2Live.LeagueMechanic.Incursion => "穿越",
+        Poe2Live.LeagueMechanic.Legion => "军团",
+        Poe2Live.LeagueMechanic.Betrayal => "辛迪加",
+        Poe2Live.LeagueMechanic.Ultimatum => "最后通牒",
+        Poe2Live.LeagueMechanic.Sanctum => "圣所",
+        Poe2Live.LeagueMechanic.Delve => "矿坑",
+        Poe2Live.LeagueMechanic.Heist => "夺宝",
+        Poe2Live.LeagueMechanic.Blight => "菌潮",
+        Poe2Live.LeagueMechanic.Hellscape => "炼狱",
+        _ => "-",
+    };
 
     private static string ReadBody(HttpListenerContext ctx)
     {
