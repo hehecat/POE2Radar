@@ -17,8 +17,15 @@ namespace POE2Radar.Core.Game;
 public sealed class EntityNameResolver
 {
     private readonly Dictionary<string, string> _names;
+    private readonly Dictionary<string, string> _zhByPath;
+    private readonly Dictionary<string, string> _zhByName;
 
-    private EntityNameResolver(Dictionary<string, string> names) => _names = names;
+    private EntityNameResolver(Dictionary<string, string> names, Dictionary<string, string> zhByPath, Dictionary<string, string> zhByName)
+    {
+        _names = names;
+        _zhByPath = zhByPath;
+        _zhByName = zhByName;
+    }
 
     /// <summary>The shared resolver, loaded once from the embedded table.</summary>
     public static EntityNameResolver Shared { get; } = LoadEmbedded();
@@ -26,10 +33,12 @@ public sealed class EntityNameResolver
     private static EntityNameResolver LoadEmbedded()
     {
         var names = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var zhByPath = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var zhByName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         try
         {
             var asm = Assembly.GetExecutingAssembly();
-            var resName = asm.GetManifestResourceNames().FirstOrDefault(n => n.Contains("entity_names"));
+            var resName = FindJsonResource(asm, "entity_names");
             if (resName != null)
             {
                 using var stream = asm.GetManifestResourceStream(resName)!;
@@ -37,12 +46,35 @@ public sealed class EntityNameResolver
                 foreach (var prop in doc.RootElement.EnumerateObject())
                     names[prop.Name] = prop.Value.GetString() ?? "";
             }
+
+            var zhResName = FindJsonResource(asm, "entity_names_zh");
+            if (zhResName != null)
+            {
+                using var stream = asm.GetManifestResourceStream(zhResName)!;
+                var doc = JsonDocument.Parse(stream);
+                foreach (var prop in doc.RootElement.EnumerateObject())
+                {
+                    var zh = prop.Value.GetString();
+                    if (string.IsNullOrWhiteSpace(zh)) continue;
+                    if (prop.Name.StartsWith("metadata/", StringComparison.OrdinalIgnoreCase))
+                        zhByPath[prop.Name] = zh;
+                    else
+                        zhByName[prop.Name] = zh;
+                }
+            }
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"EntityNames load failed: {ex.Message}");
         }
-        return new EntityNameResolver(names);
+        return new EntityNameResolver(names, zhByPath, zhByName);
+    }
+
+    private static string? FindJsonResource(Assembly asm, string fileName)
+    {
+        var suffix = $".{fileName}.json";
+        return asm.GetManifestResourceNames()
+            .FirstOrDefault(n => n.EndsWith(suffix, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>Number of loaded name mappings (0 means the table failed to load).</summary>
@@ -64,31 +96,46 @@ public sealed class EntityNameResolver
         var at = metadataPath.IndexOf('@');
         var path = at >= 0 ? metadataPath[..at] : metadataPath;
 
-        if (_names.TryGetValue(path, out var name)) return name;
+        if (_zhByPath.TryGetValue(path, out var zhPath)) return zhPath;
+        if (_names.TryGetValue(path, out var name)) return Localize(name);
 
         var probe = path;
         int slash;
         while ((slash = probe.LastIndexOf('/')) > 0)
         {
             probe = probe[..slash];
-            if (_names.TryGetValue(probe, out name)) return name;
+            if (_zhByPath.TryGetValue(probe, out zhPath)) return zhPath;
+            if (_names.TryGetValue(probe, out name)) return Localize(name);
         }
         return null;
     }
 
+    private string Localize(string name)
+    {
+        var clean = CleanMarker(name);
+        return _zhByName.TryGetValue(clean, out var zh) ? zh : clean;
+    }
+
+    private static string CleanMarker(string name)
+    {
+        const string dntUnused = "[DNT-UNUSED] ";
+        const string dnt = "[DNT] ";
+        if (name.StartsWith(dntUnused, StringComparison.Ordinal)) return name[dntUnused.Length..];
+        if (name.StartsWith(dnt, StringComparison.Ordinal)) return name[dnt.Length..];
+        return name;
+    }
+
     /// <summary>
     /// Friendly name if known, otherwise a best-effort short label derived from the path's last
-    /// segment. A leading <c>[DNT-UNUSED]</c> marker (do-not-translate placeholders in the source
-    /// table) is stripped.
+    /// segment. Leading <c>[DNT]</c> markers (do-not-translate placeholders in the source table)
+    /// are stripped.
     /// </summary>
     public string ResolveOrShorten(string metadataPath)
     {
         var resolved = Resolve(metadataPath);
         if (resolved != null)
         {
-            const string dnt = "[DNT-UNUSED] ";
-            if (resolved.StartsWith(dnt, StringComparison.Ordinal)) resolved = resolved[dnt.Length..];
-            return resolved;
+            return CleanMarker(resolved);
         }
         var at = metadataPath.IndexOf('@');
         var path = at >= 0 ? metadataPath[..at] : metadataPath;

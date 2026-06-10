@@ -9,9 +9,10 @@ namespace POE2Radar.Core.Game;
 /// This closes the long-standing "friendly area Name string" gap (we only had the raw code from
 /// memory) using a static table rather than another memory read.
 ///
-/// <para>Two embedded tables: <c>world_areas.json</c> (code → name/act/level/waypoint/town) and
-/// <c>zone_notes.json</c> (community leveling notes — per-zone by code, per-act fallback). Read-only;
-/// loaded once (cf. <see cref="EntityNameResolver"/>, <see cref="CustomLandmarkData"/>).</para>
+/// <para>Embedded tables: <c>world_areas.json</c> (code → name/act/level/waypoint/town),
+/// <c>world_areas_zh.json</c> (Chinese display-name overrides), and <c>zone_notes.json</c>
+/// (community leveling notes — per-zone by code, per-act fallback). Read-only; loaded once
+/// (cf. <see cref="EntityNameResolver"/>, <see cref="CustomLandmarkData"/>).</para>
 /// </summary>
 public sealed class ZoneGuide
 {
@@ -54,6 +55,18 @@ public sealed class ZoneGuide
                     }
                 }
 
+            using (var s = OpenResource(asm, "world_areas_zh"))
+                if (s != null)
+                {
+                    var doc = JsonDocument.Parse(s);
+                    foreach (var prop in doc.RootElement.EnumerateObject())
+                    {
+                        var zh = prop.Value.GetString();
+                        if (!string.IsNullOrWhiteSpace(zh) && guide._areas.TryGetValue(prop.Name, out var area))
+                            guide._areas[prop.Name] = area with { Name = zh };
+                    }
+                }
+
             using (var s = OpenResource(asm, "zone_notes"))
                 if (s != null)
                 {
@@ -80,9 +93,11 @@ public sealed class ZoneGuide
         return guide;
     }
 
-    private static Stream? OpenResource(Assembly asm, string contains)
+    private static Stream? OpenResource(Assembly asm, string fileName)
     {
-        var name = asm.GetManifestResourceNames().FirstOrDefault(n => n.Contains(contains));
+        var suffix = $".{fileName}.json";
+        var name = asm.GetManifestResourceNames()
+            .FirstOrDefault(n => n.EndsWith(suffix, StringComparison.OrdinalIgnoreCase));
         return name == null ? null : asm.GetManifestResourceStream(name);
     }
 
@@ -99,7 +114,7 @@ public sealed class ZoneGuide
 
     /// <summary>"Act N" string for an area, or "" when the act is unknown.</summary>
     public string ActLabel(string areaCode)
-        => Area(areaCode) is { Act: > 0 } a ? $"Act {a.Act}" : "";
+        => Area(areaCode) is { Act: > 0 } a ? $"第 {a.Act} 章" : "";
 
     /// <summary>
     /// Leveling notes for an area: the zone-specific note if present, else the act-level note.
@@ -108,11 +123,11 @@ public sealed class ZoneGuide
     public (string Title, string Notes)? Notes(string areaCode)
     {
         if (Area(areaCode) is not { } a) return null;
-        var actLabel = a.Act > 0 ? $"Act {a.Act}" : "";
+        var actLabel = a.Act > 0 ? $"第 {a.Act} 章" : "";
         var title = actLabel.Length > 0 ? $"{actLabel} — {a.Name}" : a.Name;
 
         var notes = _zoneNotes.GetValueOrDefault(areaCode, "");
-        if (notes.Length == 0 && actLabel.Length > 0) notes = _actNotes.GetValueOrDefault(actLabel, "");
+        if (notes.Length == 0 && a.Act > 0) notes = _actNotes.GetValueOrDefault($"Act {a.Act}", "");
         return (title, notes);
     }
 }
